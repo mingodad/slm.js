@@ -110,6 +110,21 @@ JsLayoutManager = function() {
 		function (e, c) {e.preventDefault(); if (c) e.stopPropagation();}:
 		function (e, c) {e.preventDefault ? e.preventDefault() : e.returnValue = false; if (c) e.cancelBubble = true;};
 	
+	// As taken from the UnderscoreJS utility framework
+	var debounce = function(func, wait, immediate) {
+		var timeout;
+		return function() {
+			var context = this, args = arguments;
+			var later = function() {
+				timeout = null;
+				if (!immediate) func.apply(context, args);
+			};
+			var callNow = immediate && !timeout;
+			clearTimeout(timeout);
+			timeout = setTimeout(later, wait);
+			if (callNow) func.apply(context, args);
+		};
+	};
 
 	var getLayout = function(elm)
 	{
@@ -293,6 +308,36 @@ JsLayoutManager = function() {
 			snum = parseInt(snum);
 		}
 		return isNaN(snum) ? dflt : snum;
+	};
+
+	var createBorderMirror = function(elm)
+	{
+		var bm = document.createElement('div');
+		bm.className = "resizer-mirror-tmp";
+		setCss(bm, {"position": "absolute",
+			"left": addStr_px(elm.offsetLeft),
+			"top": addStr_px(elm.offsetTop),
+			"width": addStr_px(elm.offsetWidth),
+			"height": addStr_px(elm.offsetHeight)});
+		elm.parentNode.appendChild(bm);
+		return bm;
+	};
+
+	var getBorderMirror = function(elm)
+	{
+		var bm = getChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
+		return bm.length ? bm[0] : null;
+	};
+
+	var removeBorderMirror = function(elm)
+	{
+		removeChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
+	};
+
+	var setCssBorderMirror = function(elm, ocss)
+	{
+		var bm = getBorderMirror(elm);
+		setCss(bm, ocss);
 	};
 
 	//crea gestione resize su target
@@ -687,16 +732,28 @@ JsLayoutManager = function() {
 						var offset = e.pageY - drag;
 						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
 						{
-							objLayout.sash = offset;
-							setLayout(elmToManage, objLayout);
-							manageLayout(elmToManage);
+							var bm = getBorderMirror(spl);
+							if(bm)
+							{
+								setCss(bm, {"top": addStr_px(offset)});
+							}
 						}
 					}
 					cancelEvent(e);
 				};
 
 				handle_mouseup = function(e) {
+					if (drag >= 0) {
+						var offset = e.pageY - drag;
+						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
+						{
+							objLayout.sash = offset;
+							setLayout(elmToManage, objLayout);
+							manageLayout(elmToManage);
+						}
+					}
 					drag = -1;
+					removeBorderMirror(spl);
 					cancelEvent(e);
 					window.onmouseup = null;
 					window.ontouchend = null;
@@ -706,6 +763,7 @@ JsLayoutManager = function() {
 
 				handle_mousedown = function(e) {
 					drag = e.pageY - objLayout.sash;
+					var rs = createBorderMirror(spl);
 					cancelEvent(e);
 					window.onmouseup = handle_mouseup;
 					window.ontouchend = handle_mouseup;
@@ -759,16 +817,28 @@ JsLayoutManager = function() {
 						var offset = e.pageX - drag;
 						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
 						{
-							objLayout.sash = offset;
-							setLayout(elmToManage, objLayout);
-							manageLayout(elmToManage);
+							var bm = getBorderMirror(spl);
+							if(bm)
+							{
+								setCss(bm, {"left": addStr_px(offset)});
+							}
 						}
 					}
 					cancelEvent(e);
 				};
 
 				handle_mouseup = function(e) {
+					if (drag >= 0) {
+						var offset = e.pageX - drag;
+						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
+						{
+							objLayout.sash = offset;
+							setLayout(elmToManage, objLayout);
+							manageLayout(elmToManage);
+						}
+					}
 					drag = -1;
+					removeBorderMirror(spl);
 					cancelEvent(e);
 					window.onmouseup = null;
 					window.ontouchend = null;
@@ -779,6 +849,7 @@ JsLayoutManager = function() {
 				handle_mousedown = function(e) {
 					t = getLayout(elmToManage);
 					drag = e.pageX - objLayout.sash;
+					var rs = createBorderMirror(spl);
 					cancelEvent(e);
 					window.onmousemove = handle_mousemove;
 					window.ontouchmove = handle_mousemove;
