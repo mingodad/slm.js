@@ -1,3 +1,8 @@
+JsLayoutManager.js
+======
+
+Removed jquery dependency from the original slm.js
+
 slm.js
 ======
 
