@@ -3,7 +3,7 @@
 .tabheader div { background: linear-gradient(#DDDDFF, #EEEEFF);border: 1px solid grey;margin: 1px;padding: 1px;cursor: default;font-family: sans-serif; font-size: medium; text-align: left; color: black;}
 .tabheader div.selected{ background: linear-gradient(#73A5C7, #7878EC);color: white;}
 .splitter {background-color: rgb(196, 196, 196);z-index:100;}
-.resizer-mirror-tmp {position: absolute; background-color: rgb(196, 196, 196);z-index:200;outline: dotted 1px !important;};
+.resizer-mirror-tmp {position: absolute; background-color: rgb(196, 196, 196);z-index:200;outline:dotted 1px !important;}
 .shift {z-index:1000;background: linear-gradient(#DDDDFF, #EEEEFF);border: 1px solid grey;margin: 1px;padding: 1px;cursor: default;font-family: sans-serif; font-size: medium; text-align: left; color: black;}
 .accheader{background: linear-gradient(#DDDDFF, #EEEEFF);border: 1px solid grey;margin: 1px;padding: 1px;cursor: default;font-family: sans-serif; font-size: medium; text-align: left; color: black;}
 .accheader.selected{ background: linear-gradient(#73A5C7, #7878EC);color: white;}
