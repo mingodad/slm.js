@@ -140,7 +140,7 @@ JsLayoutManager = function() {
 			}
 			catch (ex)
 			{
-				console.log(ex);
+				console.log(ex, json_str);
 			}
 		}
 		return {};
