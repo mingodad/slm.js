@@ -292,7 +292,7 @@ JsLayoutManager = function() {
 		return null;
 	};
 
-	var getNumber = function(snum, deflt)
+	var getNumber = function(snum, dflt)
 	{
 		if(snum && (typeof snum === "string"))
 		{
@@ -301,7 +301,7 @@ JsLayoutManager = function() {
 		return isNaN(snum) ? dflt : snum;
 	};
 
-	var getInteger = function(snum, deflt)
+	var getInteger = function(snum, dflt)
 	{
 		if(snum && (typeof snum === "string"))
 		{
