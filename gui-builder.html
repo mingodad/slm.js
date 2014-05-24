@@ -35,6 +35,64 @@
         {
             JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-properties"));
         }
+		
+		var drag_mouse_point = false;
+		var drag_mouse_clone = false;
+		function handle_mousemove(e) {
+			if (drag_mouse_point) {
+				var target = JsLayoutManager.getEventSource(e);
+				//console.log(target);
+				if(drag_mouse_clone)
+				{
+					drag_mouse_point = JsLayoutManager.getMousePos(e);
+					drag_mouse_point.x++;
+					drag_mouse_point.y++;
+					JsLayoutManager.setCss(drag_mouse_clone, {
+						top: JsLayoutManager.addStr_px(drag_mouse_point.y),
+						left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
+				}
+			}
+			JsLayoutManager.cancelEvent(e);
+		};
+
+		function handle_mouseup(e) {
+			if (drag_mouse_point) {
+				var target = JsLayoutManager.getEventSource(e);
+				console.log(target);
+				if(drag_mouse_clone)
+				{
+					JsLayoutManager.setCss(drag_mouse_clone, {
+						outline: "",
+						top: JsLayoutManager.addStr_px(drag_mouse_point.y-target.offsetTop),
+						left: JsLayoutManager.addStr_px(drag_mouse_point.x-target.offsetLeft)
+					});
+					target.appendChild(document.body.removeChild(drag_mouse_clone));
+				}
+			}
+			drag_mouse_point = false;
+			JsLayoutManager.cancelEvent(e);
+			JsLayoutManager.removeEventMulti(window, "mouseup touchend", handle_mouseup);
+			JsLayoutManager.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
+		};
+		
+		function startDragPalette(e)
+		{
+			var target = JsLayoutManager.getEventSource(e);
+			console.log(target);
+			drag_mouse_point = JsLayoutManager.getMousePos(e);
+			drag_mouse_point.x++;
+			drag_mouse_point.y++;
+			drag_mouse_clone = target.cloneNode(true);
+			document.body.appendChild(drag_mouse_clone);
+			JsLayoutManager.setCss(drag_mouse_clone, {
+				outline: "dotted 1px",
+				position: "absolute",
+				top: JsLayoutManager.addStr_px(drag_mouse_point.y),
+				left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
+			JsLayoutManager.cancelEvent(e, true);
+			JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
+			JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
+		}
     </script>
 </head>
 
@@ -116,7 +174,7 @@
                         </ul>                        
                     </div>
                     <div data-layout="title:'Top Levels'">
-                        <ul>
+                        <ul onmousedown="startDragPalette(event);">
                             <li>Window</li>
                             <li>Offscreen Window</li>
                             <li>Dialog Box</li>
