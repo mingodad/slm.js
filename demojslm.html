@@ -33,6 +33,7 @@ body, button
 
         function applyLayoutToBody()
         {
+            var myRootElement = document.getElementById("root");
             var i, len, layout, children = document.body.children;
             for(i=0, len=children.length; i < len; ++i)
             {
@@ -44,12 +45,12 @@ body, button
             }
 			document.getElementById("showDialog").onclick = function(){
 				myRootElement.setAttribute("data-layout","sz:'dialog',w:400,h:400");
-				JsLayoutManager.manajeLayout(myRootElement);
+				JsLayoutManager.manageLayout(myRootElement);
 			};
 
 			document.getElementById("showFullpage").onclick = function(){
 				myRootElement.setAttribute("data-layout","sz:'fullpage'");
-				JsLayoutManager.manajeLayout(myRootElement);
+				JsLayoutManager.manageLayout(myRootElement);
 			};
         }
         window.onload = applyLayoutToBody;
