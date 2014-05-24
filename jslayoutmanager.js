@@ -9,14 +9,17 @@
 	
 */
 
-JsLayoutManager = (function() {
-
-	this.isSpace = function( ch ) {
+JsLayoutManager = new function() {
+	
+	var self = this;
+	
+	self.isSpace = function( ch ) {
 			return (ch === " ") || (ch === "\t") || (ch === "\n") || (ch === "\r") || (ch === "\v");
 	};
 
-	this.strHasWord = function(str, word){
+	self.strHasWord = function(str, word){
 		var found = str.indexOf(word);
+		var isSpace = self.isSpace;
 		while(found >= 0) {
 			if(found === 0){
 				if( (str.length === word.length) ||
@@ -32,8 +35,9 @@ JsLayoutManager = (function() {
 		return false;
 	};
 
-	this.strRemoveWord = function(str, word){
+	self.strRemoveWord = function(str, word){
 		var found = str.indexOf(word);
+		var isSpace = self.isSpace;
 		while(found >= 0) {
 			if(found === 0){
 				if(str.length === word.length) return "";
@@ -56,11 +60,11 @@ JsLayoutManager = (function() {
 
 	if(document.classList)
 	{
-		this.hasClass = function(elm, className) {
+		self.hasClass = function(elm, className) {
 			return className && elm.classList.indexOf(className) >= 0;
 		};
 
-		this.addClass = function(elm, className) {
+		self.addClass = function(elm, className) {
 			if(className)
 			{
 				if(elm.classList.indexOf(className) >= 0) return;
@@ -68,51 +72,84 @@ JsLayoutManager = (function() {
 			}
 		};
 
-		this.removeClass = function(elm, className) {
+		self.removeClass = function(elm, className) {
 			elm.classList.remove(className);
 		};	
 	} else {
-		this.hasClass = function(elm, className) {
+		self.hasClass = function(elm, className) {
 			var elm_className = elm.className;
-			return elm_className && strHasWord(elm_className, className);
+			return elm_className && self.strHasWord(elm_className, className);
 		};
 
-		this.addClass = function(elm, className) {
-			if(hasClass(elm, className)) return;
+		self.addClass = function(elm, className) {
+			if(self.hasClass(elm, className)) return;
 			var elm_className = elm.className;
 			if(elm_className) elm.className = elm_className + " " + className;
 			else elm.className = className;
 		};
 
-		this.removeClass = function(elm, className) {
-			elm.className = strRemoveWord(elm.className, className);
+		self.removeClass = function(elm, className) {
+			elm.className = self.strRemoveWord(elm.className, className);
 		};
 	}
 
-	this.toggleClass = function(elm, className, doAdd) {
+	self.toggleClass = function(elm, className, doAdd) {
 		if(doAdd) {
-			addClass(elm, className);
+			self.addClass(elm, className);
 			return;
 		}
-		removeClass(elm, className);
+		self.removeClass(elm, className);
 	};
 	
-	this.isArray = function(obj) { return Object.prototype.toString.call( obj ) === '[object Array]';};
+	self.isArray = function(obj) { return Object.prototype.toString.call( obj ) === '[object Array]';};
 
-	this.addEvent = window.addEventListener ? 
+	self.addEvent = window.addEventListener ? 
 		function(obj,evt,fn) {obj.addEventListener(evt,fn,false);} :
 		function(obj,evt,fn) {obj.attachEvent('on'+evt,fn);};
 
-	this.removeEvent = window.removeEventListener ?
+	self.removeEvent = window.removeEventListener ?
 		function(obj,evt,fn) {obj.removeEventListener(evt,fn,false);} :
 		function(obj,evt,fn) {obj.detachEvent('on'+evt,fn);};
 
-	this.cancelEvent = window.addEventListener ? 
+	self.cancelEvent = window.addEventListener ? 
 		function (e, c) {e.preventDefault(); if (c) e.stopPropagation();}:
 		function (e, c) {e.preventDefault ? e.preventDefault() : e.returnValue = false; if (c) e.cancelBubble = true;};
+
+	self.addEventMulti = function(obj, evts, fn){
+		var ary = evts.split(' ');
+		for(var i in ary) self.addEvent(obj, ary[i], fn);
+	};
+
+	self.removeEventMulti = function(obj, evts, fn){
+		var ary = evts.split(' ');
+		for(var i in ary) self.removeEvent(obj, ary[i], fn);
+	};
+
+	self.getEventSource = function(evt) {
+		var target = evt.target ? evt.target : evt.srcElement;
+		return (target.nodeType === 3) ? target.parentNode : target;
+	};
+	self.getOffsetX = function(evt) {return evt.changedTouches ? evt.changedTouches[0].offsetX : evt.offsetX || evt.layerX;};
+	self.getOffsetY = function(evt) {return evt.changedTouches ? evt.changedTouches[0].offsetY : evt.offsetY || evt.layerY;};
+	self.getClientX = function(evt) {return evt.changedTouches ? evt.changedTouches[0].pageX : evt.clientX;};
+	self.getClientY = function(evt) {return evt.changedTouches ? evt.changedTouches[0].pageY : evt.clientY;};
+
+	self.getMousePos = function (evt){
+		if (('targetTouches' in evt) && evt.targetTouches.length){
+			var t = evt.targetTouches[0];
+			 return { x: t.pageX, y: t.pageY };
+		} else if (evt.pageX || evt.pageY)
+			 return { x: evt.pageX, y: evt.pageY };
+		else {
+			var delm = document.documentElement;
+			var bdy = document.body;
+			return { x: evt.clientX + delm.scrollLeft - bdy.clientLeft,
+								y: evt.clientY + delm.scrollTop  - bdy.clientTop };
+		}
+	};
 	
 	// As taken from the UnderscoreJS utility framework
-	this.debounce = function(func, wait, immediate) {
+	self.debounce = function(func, wait, immediate) {
 		var timeout;
 		return function() {
 			var context = this, args = arguments;
@@ -127,7 +164,7 @@ JsLayoutManager = (function() {
 		};
 	};
 
-	this.getLayout = function(elm)
+	self.getLayout = function(elm)
 	{
 		var json_str = elm.getAttribute("data-layout");
 		if (json_str)
@@ -147,22 +184,22 @@ JsLayoutManager = (function() {
 		return {};
 	};
 
-	this.setLayout = function(elm, obj)
+	self.setLayout = function(elm, obj)
 	{
 		var objs = JSON.stringify(obj);
 		objs = objs.substr(1, objs.length - 2);
 		elm.setAttribute("data-layout", objs);
 	};
 
-	this.invalidate = function(elm)
+	self.invalidate = function(elm)
 	{
-		var objLayout = getLayout(elm);
+		var objLayout = self.getLayout(elm);
 		objLayout.ok = false;
-		setLayout(elm, objLayout);
-		manageLayout(elm);
+		self.setLayout(elm, objLayout);
+		self.manageLayout(elm);
 	};
 
-	this.getFullElmSize = function(elm) {
+	self.getFullElmSize = function(elm) {
 		var elmHeight, elmHMargin, elmWdith, elmWMargin, cs;
 		if (document.all) {// IE
 			elmHeight = elm.currentStyle.height;
@@ -178,7 +215,7 @@ JsLayoutManager = (function() {
 		return {heigth : (elmHeight + elmHMargin), width: (elmWdith + elmWMargin)};
 	};
 
-	this.setCss = function(elm, kv)
+	self.setCss = function(elm, kv)
 	{
 		var i, len, k, style;
 		var setStyle = function(elm, kv)
@@ -189,7 +226,7 @@ JsLayoutManager = (function() {
 				style[k] = kv[k];
 			}			
 		};
-		if (isArray(elm))
+		if (self.isArray(elm))
 		{
 			for (i = 0, len = elm.length; i < len; ++i)
 			{
@@ -199,16 +236,16 @@ JsLayoutManager = (function() {
 			setStyle(elm, kv);
 		}
 	};
-	this.getCss = function(elm, k)
+	self.getCss = function(elm, k)
 	{
 		return elm.style[k];
 	};
 
-	this.addStr_px = function(x) {
+	self.addStr_px = function(x) {
 		return x + "px";
 	};
 
-	this.elmHide = function(elm)
+	self.elmHide = function(elm)
 	{
 		var i, len, style;
 		var setDisplay = function(elm) {
@@ -219,7 +256,7 @@ JsLayoutManager = (function() {
 			}
 			elm.style.display = 'none';
 		};
-		if (isArray(elm))
+		if (self.isArray(elm))
 		{
 			for (i = 0, len = elm.length; i < len; ++i)
 			{
@@ -229,7 +266,7 @@ JsLayoutManager = (function() {
 			setDisplay(elm);
 		}
 	};
-	this.elmShow = function(elm)
+	self.elmShow = function(elm)
 	{
 		style = elm.style;
 		if (style.hideSavedDisplay)
@@ -241,7 +278,7 @@ JsLayoutManager = (function() {
 		}
 	};
 
-	this.getChildrenByClass = function(elm, cls, notHaving)
+	self.getChildrenByClass = function(elm, cls, notHaving)
 	{
 		var children = elm.children;
 		var result = [];
@@ -249,7 +286,7 @@ JsLayoutManager = (function() {
 		for (; i < len; ++i)
 		{
 			var child = children[i];
-			var ok_to_add = hasClass(child, cls);
+			var ok_to_add = self.hasClass(child, cls);
 			if(notHaving)
 			{
 				ok_to_add = !ok_to_add;
@@ -261,10 +298,10 @@ JsLayoutManager = (function() {
 		}
 		return result;
 	};
-	this.removeChildrenByClass = function(elm, cls)
+	self.removeChildrenByClass = function(elm, cls)
 	{
 		var children = elm.children;
-		var toRemove = getChildrenByClass(elm, cls);
+		var toRemove = self.getChildrenByClass(elm, cls);
 		var i = 0;
 		var len = toRemove.length;
 		for (; i < len; ++i)
@@ -272,18 +309,18 @@ JsLayoutManager = (function() {
 			elm.removeChild(toRemove[i]);
 		}
 	};
-	this.removeClassForChildren = function(elm, cls)
+	self.removeClassForChildren = function(elm, cls)
 	{
 		var children = elm.children;
 		var i = 0;
 		var len = children.length;
 		for (; i < len; ++i)
 		{
-			removeClass(children[i], cls);
+			self.removeClass(children[i], cls);
 		}
 	};
 	
-	this.getPercentage = function(snum)
+	self.getPercentage = function(snum)
 	{
 		if(snum && (typeof snum === "string") && snum.indexOf("%") > 0)
 		{
@@ -293,7 +330,7 @@ JsLayoutManager = (function() {
 		return null;
 	};
 
-	this.getNumber = function(snum, dflt)
+	self.getNumber = function(snum, dflt)
 	{
 		if(snum && (typeof snum === "string"))
 		{
@@ -302,7 +339,7 @@ JsLayoutManager = (function() {
 		return isNaN(snum) ? dflt : snum;
 	};
 
-	this.getInteger = function(snum, dflt)
+	self.getInteger = function(snum, dflt)
 	{
 		if(snum && (typeof snum === "string"))
 		{
@@ -311,42 +348,42 @@ JsLayoutManager = (function() {
 		return isNaN(snum) ? dflt : snum;
 	};
 
-	this.createBorderMirror = function(elm)
+	self.createBorderMirror = function(elm)
 	{
 		var bm = document.createElement('div');
 		bm.className = "resizer-mirror-tmp";
-		setCss(bm, {"position": "absolute",
-			"left": addStr_px(elm.offsetLeft),
-			"top": addStr_px(elm.offsetTop),
-			"width": addStr_px(elm.offsetWidth),
-			"height": addStr_px(elm.offsetHeight)});
+		self.setCss(bm, {"position": "absolute",
+			"left": self.addStr_px(elm.offsetLeft),
+			"top": self.addStr_px(elm.offsetTop),
+			"width": self.addStr_px(elm.offsetWidth),
+			"height": self.addStr_px(elm.offsetHeight)});
 		elm.parentNode.appendChild(bm);
 		return bm;
 	};
 
-	this.getBorderMirror = function(elm)
+	self.getBorderMirror = function(elm)
 	{
-		var bm = getChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
+		var bm = self.getChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
 		return bm.length ? bm[0] : null;
 	};
 
-	this.removeBorderMirror = function(elm)
+	self.removeBorderMirror = function(elm)
 	{
-		removeChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
+		self.removeChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
 	};
 
-	this.setCssBorderMirror = function(elm, ocss)
+	self.setCssBorderMirror = function(elm, ocss)
 	{
-		var bm = getBorderMirror(elm);
-		setCss(bm, ocss);
+		var bm = self.getBorderMirror(elm);
+		self.setCss(bm, ocss);
 	};
 
 	//crea gestione resize su target
-	this.manageOnResize = function(target)
+	self.manageOnResize = function(target)
 	{
 		var d;
 		var fmousemove = function(e) {
-			var objLayout = getLayout(target);
+			var objLayout = self.getLayout(target);
 			var dx = e.pageX - d.ex;
 			var dy = e.pageY - d.ey;
 			var edge = d.edge;
@@ -364,13 +401,13 @@ JsLayoutManager = (function() {
 				objLayout.h = d.h - dy;
 				objLayout.y = d.y + dy;
 			}
-			setLayout(target, objLayout);
-			manageLayout(target);
-			cancelEvent(e);
+			self.setLayout(target, objLayout);
+			self.manageLayout(target);
+			self.cancelEvent(e);
 		};
 		var fmouseup = function(e) {
-			removeEvent(document, "mouseup", fmouseup);
-			removeEvent(document, "mousemove", fmousemove);
+			self.removeEvent(document, "mouseup", fmouseup);
+			self.removeEvent(document, "mousemove", fmousemove);
 		};
 		var fmousedown = function(e) {
 			//calcolo edge resize
@@ -382,32 +419,32 @@ JsLayoutManager = (function() {
 			var l = {left: x < q, top: y < q, right: w - x < q, bottom: h - y < q};
 			if (l.left || l.top || l.right || l.bottom)
 			{
-				objLayout = getLayout(target);
+				objLayout = self.getLayout(target);
 				objLayout.ex = e.pageX;
 				objLayout.ey = e.pageY;
 				objLayout.edge = l;
-				addEvent(document, "mousemove", fmousemove);
-				addEvent(document, "mouseup", fmouseup);
+				self.addEvent(document, "mousemove", fmousemove);
+				self.addEvent(document, "mouseup", fmouseup);
 			}
 		};
-		addEvent(target, "mousedown", fmousedown);
+		self.addEvent(target, "mousedown", fmousedown);
 	};
 
-	this.layoutFunctions = {
+	self.layoutFunctions = {
 		absolute: function(elmToManage, objLayout, c)
 		{
 			if (!objLayout.ok)
 			{
-				setCss(elmToManage, {overflow: "hidden"});
+				self.setCss(elmToManage, {overflow: "hidden"});
 				objLayout.x = isNaN(objLayout.x) ? 0 : objLayout.x;
 				objLayout.y = isNaN(objLayout.y) ? 0 : objLayout.y;
 				objLayout.w = isNaN(objLayout.w) ? 0 : objLayout.w;
 				objLayout.h = isNaN(objLayout.h) ? 0 : objLayout.h;
-				setCss(elmToManage, {"position": "absolute",
-					"left": addStr_px(objLayout.x), "top": addStr_px(objLayout.y),
-					"width": addStr_px(objLayout.w), "height": addStr_px(objLayout.h)});
+				self.setCss(elmToManage, {"position": "absolute",
+					"left": self.addStr_px(objLayout.x), "top": self.addStr_px(objLayout.y),
+					"width": self.addStr_px(objLayout.w), "height": self.addStr_px(objLayout.h)});
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
 		},
 		fullpage: function(elmToManage, objLayout, c, propagate)
@@ -415,17 +452,17 @@ JsLayoutManager = (function() {
 			var c0;
 			if (!objLayout.ok)
 			{
-				setCss(elmToManage, {overflow: 'hidden'});
+				self.setCss(elmToManage, {overflow: 'hidden'});
 				//vincola il contenitore alla finestra e aggancia gli eventi di resize
-				setCss(elmToManage, {"position": "fixed", "left": 0, "top": 0, "right": 0, "bottom": 0, "width": "", "height": ""});
+				self.setCss(elmToManage, {"position": "fixed", "left": 0, "top": 0, "right": 0, "bottom": 0, "width": "", "height": ""});
 				window.onresize = propagate;
 				//figli: il dialog accetta un solo figlio e lo massimizza
-				elmHide(c);
+				self.elmHide(c);
 				c0 = c[0];
-				setCss(c0, {"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0});
-				elmShow(c0);
+				self.setCss(c0, {"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0});
+				self.elmShow(c0);
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
 		},
 		dialog: function(elmToManage, objLayout, c)
@@ -433,27 +470,27 @@ JsLayoutManager = (function() {
 			var drag, handle_mouseup, handle_mousemove;
 			if (!objLayout.ok)
 			{
-				setCss(elmToManage, {overflow: 'hidden'});
-				addClass(elmToManage, "slmdialog");
+				self.setCss(elmToManage, {overflow: 'hidden'});
+				self.addClass(elmToManage, "slmdialog");
 				objLayout.x = isNaN(objLayout.x) ? 100 : objLayout.x;
 				objLayout.y = isNaN(objLayout.y) ? 100 : objLayout.y;
 				objLayout.w = isNaN(objLayout.w) ? 100 : objLayout.w;
 				objLayout.h = isNaN(objLayout.h) ? 100 : objLayout.h;
-				setCss(elmToManage, {"position": "fixed",
-					"top": addStr_px(objLayout.y), "left": addStr_px(objLayout.x),
-					"width": addStr_px(objLayout.w), "height": addStr_px(objLayout.h),
+				self.setCss(elmToManage, {"position": "fixed",
+					"top": self.addStr_px(objLayout.y), "left": self.addStr_px(objLayout.x),
+					"width": self.addStr_px(objLayout.w), "height": self.addStr_px(objLayout.h),
 					"background": "white", "border": "2px solid grey"});
 				//barra del dialog
 				var m = 10;
 				var hdlg = document.createElement('div');
-				addClass(hdlg, "slmignore");
-				setCss(hdlg, {"left": 0, "top": 0, "right": 0, "cursor": "move"});
+				self.addClass(hdlg, "slmignore");
+				self.setCss(hdlg, {"left": 0, "top": 0, "right": 0, "cursor": "move"});
 				hdlg.innerHTML = "dialog";
 				elmToManage.insertBefore(hdlg, elmToManage.firstChild);
 				//gestione chiusura
-				var hh = addStr_px(hdlg.clientHeight);
+				var hh = self.addStr_px(hdlg.clientHeight);
 				var closeDlg = document.createElement('div');
-				setCss(closeDlg, {"position": "absolute", "right": 0, "top": 0,
+				self.setCss(closeDlg, {"position": "absolute", "right": 0, "top": 0,
 					"width": hh, "height": hh, "background": "rgb(230, 102, 102)", "text-align": "center", "cursor": "default"});
 				closeDlg.innerHTML = "x";
 				hdlg.appendChild(closeDlg);
@@ -467,36 +504,36 @@ JsLayoutManager = (function() {
 						objLayout.x = e.pageX - drag[0];
 						objLayout.y = e.pageY - drag[1];
 						//setLayout(elmToManage, objLayout);
-						setCss(elmToManage, {"left": addStr_px(objLayout.x), "top": addStr_px(objLayout.y)});
-						cancelEvent(e);
+						self.setCss(elmToManage, {"left": self.addStr_px(objLayout.x), "top": self.addStr_px(objLayout.y)});
+						self.cancelEvent(e);
 					}
 				};
 				handle_mouseup = function(e) {
 					drag = null;
-					setLayout(elmToManage, objLayout);
+					self.setLayout(elmToManage, objLayout);
 					document.onmousemove = null;
 					document.onmouseup = null;
 				};
 				hdlg.onmousedown = function(e) {
-					objLayout = getLayout(elmToManage);
+					objLayout = self.getLayout(elmToManage);
 					drag = [e.pageX - objLayout.x, e.pageY - objLayout.y];
 					document.onmousemove = handle_mousemove;
 					document.onmouseup = handle_mouseup;
 				};
 				//figli: il dialog accetta un solo figlio e lo massimizza
-				elmHide(c);
+				self.elmHide(c);
 				var c0 = c[0];
-				setCss(c0, {"position": "absolute", "left": 0, "top": addStr_px(hdlg.offsetHeight), "right": 0, "bottom": 0});
-				elmShow(c0);
+				self.setCss(c0, {"position": "absolute", "left": 0, "top": self.addStr_px(hdlg.offsetHeight), "right": 0, "bottom": 0});
+				self.elmShow(c0);
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
-				manageOnResize(elmToManage);//crea gestione resize
+				self.setLayout(elmToManage, objLayout);
+				self.manageOnResize(elmToManage);//crea gestione resize
 			}
 		},
 		boxV: function(elmToManage, objLayout, elmToManageChildren)
 		{
 			var i, o, cc, tcc;
-			setCss(elmToManage, {overflow: 'hidden'});
+			self.setCss(elmToManage, {overflow: 'hidden'});
 			var r = elmToManage.clientHeight;
 			var ta = [];
 			var tp = 0;
@@ -505,7 +542,7 @@ JsLayoutManager = (function() {
 			for (i = 0; i < csize; i++)
 			{
 				cc = elmToManageChildren[i];
-				tcc = getLayout(cc);
+				tcc = self.getLayout(cc);
 				tcc.p = isNaN(tcc.p) ? 0 : tcc.p;
 				tcc.h = isNaN(tcc.h) ? cc.offsetHeight : tcc.h;
 				if (tcc.ex)
@@ -525,15 +562,15 @@ JsLayoutManager = (function() {
 					tcc.h += r * tcc.p / tp;
 				tcc.y = o;
 				o += tcc.h;
-				setCss(cc, {"position": "absolute",
-					"left": addStr_px(tcc.x), "top": addStr_px(tcc.y),
-					"width": addStr_px(tcc.w), "height": addStr_px(tcc.h)});
+				self.setCss(cc, {"position": "absolute",
+					"left": self.addStr_px(tcc.x), "top": self.addStr_px(tcc.y),
+					"width": self.addStr_px(tcc.w), "height": self.addStr_px(tcc.h)});
 			}
 		},
 		boxH: function(elmToManage, t, elmToManageChildren)
 		{
 			var i, o, cc, tcc;
-			setCss(elmToManage, {overflow: 'hidden'});
+			self.setCss(elmToManage, {overflow: 'hidden'});
 			var r = elmToManage.clientWidth;
 			var ta = [];
 			var tp = 0;
@@ -542,7 +579,7 @@ JsLayoutManager = (function() {
 			for (i = 0; i < csize; i++)
 			{
 				cc = elmToManageChildren[i];
-				tcc = getLayout(cc);
+				tcc = self.getLayout(cc);
 				tcc.p = isNaN(tcc.p) ? 0 : tcc.p;
 				tcc.w = isNaN(tcc.w) ? cc.offsetWidth : tcc.w;
 				if (tcc.ex)
@@ -562,9 +599,9 @@ JsLayoutManager = (function() {
 					tcc.w += r * tcc.p / tp;
 				tcc.x = o;
 				o += tcc.w;
-				setCss(cc, {"position": "absolute",
-					"left": addStr_px(tcc.x), "top": addStr_px(tcc.y),
-					"width": addStr_px(tcc.w), "height": addStr_px(tcc.h)});
+				self.setCss(cc, {"position": "absolute",
+					"left": self.addStr_px(tcc.x), "top": self.addStr_px(tcc.y),
+					"width": self.addStr_px(tcc.w), "height": self.addStr_px(tcc.h)});
 			}
 		},
 		tab: function(elmToManage, objLayout, elmToManageChildren)
@@ -577,43 +614,44 @@ JsLayoutManager = (function() {
 			{
 				objLayout.sel = isNaN(objLayout.sel) ? 0 : objLayout.sel;
 				isVisible = (objLayout.o === 'w' || objLayout.o === 'e');
-				setCss(elmToManage, {overflow: 'hidden'});
-				removeChildrenByClass(elmToManage, "slmignore");
+				self.setCss(elmToManage, {overflow: 'hidden'});
+				self.removeChildrenByClass(elmToManage, "slmignore");
 				header = document.createElement('div');
-				addClass(header, "slmignore tabheader");
-				setCss(header, {"position": "absolute", "left": 0, "top": 0, "right": 0, "overflow": "hidden"});
+				self.addClass(header, "slmignore tabheader");
+				self.setCss(header, {"position": "absolute", "left": 0, "top": 0, "right": 0, "overflow": "hidden"});
 				elmToManage.insertBefore(header, elmToManage.firstChild);
 				for (i = 0; i < csize; i++)
 				{
 					cc = elmToManageChildren[i];
-					pt = getLayout(cc);
+					self.addClass(cc, "tabbody");
+					pt = self.getLayout(cc);
 					pt.title = (pt.title === undefined) ? "tab " + i : pt.title;
 					s = document.createElement('div');
 					s.innerHTML = pt.title;
 					header.appendChild(s);
-					toggleClass(s, "selected", i === objLayout.sel);
-					setCss(s, {"display": isVisible ? "block" : "inline-block"});
+					self.toggleClass(s, "selected", i === objLayout.sel);
+					self.setCss(s, {"display": isVisible ? "block" : "inline-block"});
 					s.onclick = (function(j) {
 						return function() {
-							removeClass(header.children[objLayout.sel], "selected");
+							self.removeClass(header.children[objLayout.sel], "selected");
 							objLayout.sel = j;
-							setLayout(elmToManage, objLayout);
-							addClass(this, "selected");
-							manageLayout(elmToManage);
+							self.setLayout(elmToManage, objLayout);
+							self.addClass(this, "selected");
+							self.manageLayout(elmToManage);
 						};
 					})(i);
 				}
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
 			//adattamento children
 			objLayout.sel = isNaN(objLayout.sel) ? 0 : objLayout.sel % csize;
-			var hs = getChildrenByClass(elmToManage, "tabheader");
-			hs = addStr_px(hs.length ? getFullElmSize(hs[0]).heigth : 0);
-			elmHide(elmToManageChildren);
+			var hs = self.getChildrenByClass(elmToManage, "tabheader");
+			hs = self.addStr_px(hs.length ? self.getFullElmSize(hs[0]).heigth : 0);
+			self.elmHide(elmToManageChildren);
 			var ctsel = elmToManageChildren[objLayout.sel];
-			setCss(ctsel, {"position": "absolute", "left": 0, "top": hs, "right": 0, "bottom": 0});
-			elmShow(ctsel);
+			self.setCss(ctsel, {"position": "absolute", "left": 0, "top": hs, "right": 0, "bottom": 0});
+			self.elmShow(ctsel);
 
 			return false;
 		},
@@ -623,45 +661,45 @@ JsLayoutManager = (function() {
 			if (!objLayout.ok)
 			{
 				objLayout.sel = isNaN(objLayout.sel) ? 0 : objLayout.sel;
-				setCss(elmToManage, {overflow: 'hidden'});
+				self.setCss(elmToManage, {overflow: 'hidden'});
 				//creazione header accordion
-				removeChildrenByClass(elmToManage, "accheader");
+				self.removeChildrenByClass(elmToManage, "accheader");
 				for (i = 0; i < csize; i++)
 				{
 					cc = elmToManageChildren[i];
-					addClass(cc, "accheaderbody");
-					ct = getLayout(cc);
+					self.addClass(cc, "accheaderbody");
+					ct = self.getLayout(cc);
 					ct.title = (ct.title === undefined) ? "acc " + i : ct.title;
 					s = document.createElement('div');
-					addClass(s, "slmignore accheader");
+					self.addClass(s, "slmignore accheader");
 					s.innerHTML = ct.title;
 					cc.parentNode.insertBefore(s, cc);
 					s.onclick = (function(j) {
 						return function() {
 							objLayout.sel = j;
-							setLayout(elmToManage, objLayout);
-							manageLayout(elmToManage);
+							self.setLayout(elmToManage, objLayout);
+							self.manageLayout(elmToManage);
 						};
 					})(i);
 				}
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
 			//ricalcolo spazio
-			var aci, ac = getChildrenByClass(elmToManage, "accheader");
+			var aci, ac = self.getChildrenByClass(elmToManage, "accheader");
 			var r = elmToManage.clientHeight;
 			var acsize = ac.length;
 			for (i = 0; i < acsize; i++) {
 				aci = ac[i];
-				toggleClass(aci, "selected", i === objLayout.sel);
-				r -= getFullElmSize(aci).heigth;
+				self.toggleClass(aci, "selected", i === objLayout.sel);
+				r -= self.getFullElmSize(aci).heigth;
 			}
 			//adattamento children
-			elmHide(elmToManageChildren);
+			self.elmHide(elmToManageChildren);
 			objLayout.sel = isNaN(objLayout.sel) ? 0 : objLayout.sel % csize;
 			var ctsel = elmToManageChildren[objLayout.sel];
-			elmShow(ctsel);
-			setCss(ctsel, {left: 0, right: 0, height: addStr_px(r)});
+			self.elmShow(ctsel);
+			self.setCss(ctsel, {left: 0, right: 0, height: self.addStr_px(r)});
 			return false;
 		},
 		shift: function(elmToManage, objLayout, elmToManageChildren)
@@ -671,40 +709,40 @@ JsLayoutManager = (function() {
 			//creazione header
 			if (!objLayout.ok)
 			{
-				setCss(elmToManage, {overflow: 'hidden'});
-				removeChildrenByClass(elmToManage, "slmignore");
+				self.setCss(elmToManage, {overflow: 'hidden'});
+				self.removeChildrenByClass(elmToManage, "slmignore");
 				sn = document.createElement('span');
-				addClass(sn, "slmignore shift");
+				self.addClass(sn, "slmignore shift");
 				sn.innerHTML = "NEXT";
-				setCss(sn, {"position": "absolute", "right": 0, "top": 0, "overflow": "hidden"});
+				self.setCss(sn, {"position": "absolute", "right": 0, "top": 0, "overflow": "hidden"});
 				elmToManage.insertBefore(sn, elmToManage.firstChild);
 				sn.onclick = function() {
 					var csize = elmToManageChildren.length;
 					objLayout.sel = (objLayout.sel + csize + 1) % csize;
-					setLayout(elmToManage, objLayout);
-					manageLayout(elmToManage);
+					self.setLayout(elmToManage, objLayout);
+					self.manageLayout(elmToManage);
 				};
 
 				sp = document.createElement('span');
-				addClass(sp, "slmignore shift");
+				self.addClass(sp, "slmignore shift");
 				sp.innerHTML = "PREV";
-				setCss(sp, {"position": "absolute", "left": 0, "top": 0, "overflow": "hidden"});
+				self.setCss(sp, {"position": "absolute", "left": 0, "top": 0, "overflow": "hidden"});
 				elmToManage.insertBefore(sp, elmToManage.firstChild);
 				sp.onclick = function() {
 					var csize = elmToManageChildren.length;
 					objLayout.sel = (objLayout.sel + csize - 1) % csize;
-					setLayout(elmToManage, objLayout);
-					manageLayout(elmToManage);
+					self.setLayout(elmToManage, objLayout);
+					self.manageLayout(elmToManage);
 				};
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
-			setCss(getChildrenByClass(elmToManage, "shift"), {"top": addStr_px(elmToManage.clientHeight / 2)});
+			self.setCss(self.getChildrenByClass(elmToManage, "shift"), {"top": self.addStr_px(elmToManage.clientHeight / 2)});
 			//attivazione figlio selezionato
-			elmHide(elmToManageChildren);
+			self.elmHide(elmToManageChildren);
 			ctsel = elmToManageChildren[objLayout.sel];
-			setCss(ctsel, {"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0});
-			elmShow(ctsel);
+			self.setCss(ctsel, {"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0});
+			self.elmShow(ctsel);
 			return false;
 		},
 		splitV: function(elmToManage, objLayout, elmToManageChildren)
@@ -713,18 +751,18 @@ JsLayoutManager = (function() {
 			//creazione splitter
 			if (!objLayout.ok)
 			{
-				i = getPercentage(objLayout.sash);
+				i = self.getPercentage(objLayout.sash);
 				if(i !== null)
 				{
 					objLayout.sash = (elmToManage.clientHeight / 100.0) * i;
 				} else {
-					objLayout.sash = getNumber(objLayout.sash, elmToManage.clientHeight / 2);
+					objLayout.sash = self.getNumber(objLayout.sash, elmToManage.clientHeight / 2);
 				}
-				setLayout(elmToManage, objLayout);
-				setCss(elmToManage, {overflow: 'hidden'});
+				self.setLayout(elmToManage, objLayout);
+				self.setCss(elmToManage, {overflow: 'hidden'});
 				spl = document.createElement('div');
-				addClass(spl, "slmignore splitter");
-				setCss(spl, {"position": "absolute", "left": 0, "right": 0,
+				self.addClass(spl, "slmignore splitter");
+				self.setCss(spl, {"position": "absolute", "left": 0, "right": 0,
 					"height": "5px", "overflow": "hidden", "cursor": "row-resize"});
 				elmToManage.insertBefore(spl, elmToManage.firstChild);
 				drag = -1;
@@ -734,14 +772,14 @@ JsLayoutManager = (function() {
 						var offset = e.pageY - drag;
 						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
 						{
-							var bm = getBorderMirror(spl);
+							var bm = self.getBorderMirror(spl);
 							if(bm)
 							{
-								setCss(bm, {"top": addStr_px(offset)});
+								self.setCss(bm, {"top": self.addStr_px(offset)});
 							}
 						}
 					}
-					cancelEvent(e);
+					self.cancelEvent(e);
 				};
 
 				handle_mouseup = function(e) {
@@ -750,42 +788,37 @@ JsLayoutManager = (function() {
 						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
 						{
 							objLayout.sash = offset;
-							setLayout(elmToManage, objLayout);
-							manageLayout(elmToManage);
+							self.setLayout(elmToManage, objLayout);
+							self.manageLayout(elmToManage);
 						}
 					}
 					drag = -1;
-					removeBorderMirror(spl);
-					cancelEvent(e);
-					window.onmouseup = null;
-					window.ontouchend = null;
-					window.onmousemove = null;
-					window.ontouchmove = null;
+					self.removeBorderMirror(spl);
+					self.cancelEvent(e);
+					self.removeEventMulti(window, "mouseup touchend", handle_mouseup);
+					self.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
 				};
 
 				handle_mousedown = function(e) {
 					drag = e.pageY - objLayout.sash;
-					var rs = createBorderMirror(spl);
-					cancelEvent(e);
-					window.onmouseup = handle_mouseup;
-					window.ontouchend = handle_mouseup;
-					window.onmousemove = handle_mousemove;
-					window.ontouchmove = handle_mousemove;
+					var rs = self.createBorderMirror(spl);
+					self.cancelEvent(e);
+					self.addEventMulti(window, "mouseup touchend", handle_mouseup);
+					self.addEventMulti(window, "mousemove touchmove", handle_mousemove);
 				};
-				spl.onmousedown = handle_mousedown;
-				spl.ontouchstart = handle_mousedown;
+				self.addEventMulti(spl, "mousedown touchstart", handle_mousedown);
 
 
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
 			//adattamento children	
-			setCss(elmToManageChildren[0], {"position": "absolute", "left": 0, 
-				"top": 0, "right": 0, "height": addStr_px(objLayout.sash)});
-			setCss(elmToManageChildren[1], {"position": "absolute", "left": 0, 
-				"top": addStr_px(objLayout.sash + 5), "right": 0, "bottom": 0});
-			setCss(getChildrenByClass(elmToManage, "splitter"),
-				{"top": addStr_px(objLayout.sash)});
+			self.setCss(elmToManageChildren[0], {"position": "absolute", "left": 0, 
+				"top": 0, "right": 0, "height": self.addStr_px(objLayout.sash)});
+			self.setCss(elmToManageChildren[1], {"position": "absolute", "left": 0, 
+				"top": self.addStr_px(objLayout.sash + 5), "right": 0, "bottom": 0});
+			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
+				{"top": self.addStr_px(objLayout.sash)});
 			return false;
 		},
 		splitH: function(elmToManage, objLayout, elmToManageChildren)
@@ -794,18 +827,18 @@ JsLayoutManager = (function() {
 			//creazione splitter
 			if (!objLayout.ok)
 			{
-				setCss(elmToManage, {overflow: 'hidden'}); 
-				i = getPercentage(objLayout.sash);
+				self.setCss(elmToManage, {overflow: 'hidden'}); 
+				i = self.getPercentage(objLayout.sash);
 				if(i !== null)
 				{
 					objLayout.sash = (elmToManage.clientWidth / 100.0) * i;
 				} else {
-					objLayout.sash = getNumber(objLayout.sash, elmToManage.clientWidth / 2);
+					objLayout.sash = self.getNumber(objLayout.sash, elmToManage.clientWidth / 2);
 				}
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 				spl = document.createElement('div');
-				addClass(spl, "slmignore splitter");
-				setCss(spl, {"position": "absolute", "top": 0, 
+				self.addClass(spl, "slmignore splitter");
+				self.setCss(spl, {"position": "absolute", "top": 0, 
 					"bottom": 0, "width": "5px", "overflow": "hidden", "cursor": "col-resize"});
 				elmToManage.insertBefore(spl, elmToManage.firstChild);
 				drag = -1;
@@ -815,14 +848,14 @@ JsLayoutManager = (function() {
 						var offset = e.pageX - drag;
 						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
 						{
-							var bm = getBorderMirror(spl);
+							var bm = self.getBorderMirror(spl);
 							if(bm)
 							{
-								setCss(bm, {"left": addStr_px(offset)});
+								self.setCss(bm, {"left": self.addStr_px(offset)});
 							}
 						}
 					}
-					cancelEvent(e);
+					self.cancelEvent(e);
 				};
 
 				handle_mouseup = function(e) {
@@ -831,54 +864,49 @@ JsLayoutManager = (function() {
 						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
 						{
 							objLayout.sash = offset;
-							setLayout(elmToManage, objLayout);
-							manageLayout(elmToManage);
+							self.setLayout(elmToManage, objLayout);
+							self.manageLayout(elmToManage);
 						}
 					}
 					drag = -1;
-					removeBorderMirror(spl);
-					cancelEvent(e);
-					window.onmouseup = null;
-					window.ontouchend = null;
-					window.onmousemove = null;
-					window.ontouchmove = null;
+					self.removeBorderMirror(spl);
+					self.cancelEvent(e);
+					self.removeEventMulti(window, "mouseup touchend", handle_mouseup);
+					self.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
 				};
 
 				handle_mousedown = function(e) {
-					t = getLayout(elmToManage);
+					t = self.getLayout(elmToManage);
 					drag = e.pageX - objLayout.sash;
-					var rs = createBorderMirror(spl);
-					cancelEvent(e);
-					window.onmousemove = handle_mousemove;
-					window.ontouchmove = handle_mousemove;
-					window.onmouseup = handle_mouseup;
-					window.ontouchend = handle_mouseup;
+					var rs = self.createBorderMirror(spl);
+					self.cancelEvent(e);
+					self.addEventMulti(window, "mouseup touchend", handle_mouseup);
+					self.addEventMulti(window, "mousemove touchmove", handle_mousemove);
 				};
-				spl.onmousedown = handle_mousedown;
-				spl.ontouchstart = handle_mousedown;
+				self.addEventMulti(spl, "mousedown touchstart", handle_mousedown);
 
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 			}
-			setCss(elmToManageChildren[0], {"position": "absolute", "top": 0, 
-				"bottom": 0, "left": 0, "width": addStr_px(objLayout.sash)});
-			setCss(elmToManageChildren[1], {"position": "absolute", "top": 0, 
-				"left": addStr_px(objLayout.sash + 5), "bottom": 0, "right": 0});
-			setCss(getChildrenByClass(elmToManage, "splitter"),
-				{"left": addStr_px(objLayout.sash)});
+			self.setCss(elmToManageChildren[0], {"position": "absolute", "top": 0, 
+				"bottom": 0, "left": 0, "width": self.addStr_px(objLayout.sash)});
+			self.setCss(elmToManageChildren[1], {"position": "absolute", "top": 0, 
+				"left": self.addStr_px(objLayout.sash + 5), "bottom": 0, "right": 0});
+			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
+				{"left": self.addStr_px(objLayout.sash)});
 			return false;
 		},
 		snap: function(elmToManage, objLayout, elmToManageChildren)
 		{
-			setCss(elmToManage, {overflow: 'hidden'});
-			var i = getPercentage(objLayout.sash);
+			self.setCss(elmToManage, {overflow: 'hidden'});
+			var i = self.getPercentage(objLayout.sash);
 			if(i !== null)
 			{
 				objLayout.snap = (elmToManage.clientWidth / 100.0) * i;
 			} else {
 				objLayout.snap = isNaN(objLayout.snap) ? 32 : objLayout.snap;
 			}
-			setLayout(elmToManage, objLayout);
+			self.setLayout(elmToManage, objLayout);
 			var w = elmToManage.offsetWidth;
 			var ox = objLayout.snap;
 			var oy = objLayout.snap;
@@ -888,7 +916,7 @@ JsLayoutManager = (function() {
 			for (i = 0; i < csize; i++)
 			{
 				var cc = elmToManageChildren[i];
-				var ct = getLayout(cc);
+				var ct = self.getLayout(cc);
 				var cw = (isNaN(ct.sx) ? 1 : ct.sx) * objLayout.snap;
 				var ch = (isNaN(ct.sy) ? 1 : ct.sy) * objLayout.snap;
 				if (ox + cw > w && rowcnt > 0)
@@ -897,8 +925,8 @@ JsLayoutManager = (function() {
 					oy += maxch + objLayout.snap;
 					maxch = 0;
 				}
-				setCss(cc, {top: addStr_px(oy), left: addStr_px(ox),
-					width: addStr_px(cw), height: addStr_px(ch), position: 'absolute'});
+				self.setCss(cc, {top: self.addStr_px(oy), left: self.addStr_px(ox),
+					width: self.addStr_px(cw), height: self.addStr_px(ch), position: 'absolute'});
 				rowcnt++;
 				ox += cw + objLayout.snap;
 				maxch = ch > maxch ? ch : maxch;//stride
@@ -911,21 +939,21 @@ JsLayoutManager = (function() {
 			if (!objLayout.ok)
 			{
 				objLayout.bar = !!objLayout.bar;//indica se il menu è a barra
-				setCss(elmToManage, {overflow: "initial"});
+				self.setCss(elmToManage, {overflow: "initial"});
 				var fshow = (function(bar) {
 					return function(e) {
 						e.preventDefault();
 						var i, len, elm, tc, ocss = {
 							position: 'absolute',
-							top: addStr_px(bar ? this.offsetHeight - 1 : 0),
-							left: addStr_px(bar ? 0 : this.offsetWidth - 1)
+							top: self.addStr_px(bar ? this.offsetHeight - 1 : 0),
+							left: self.addStr_px(bar ? 0 : this.offsetWidth - 1)
 						};
 						tc = this.children;
 						for (i = 0, len = tc.length; i < len; ++i)
 						{
 							elm = tc[i];
-							setCss(elm, ocss);
-							elmShow(elm);
+							self.setCss(elm, ocss);
+							self.elmShow(elm);
 						}
 					};
 				})(objLayout.bar);
@@ -933,12 +961,12 @@ JsLayoutManager = (function() {
 					var i, len, tc = this.children;
 					for (i = 0, len = tc.length; i < len; ++i)
 					{
-						elmHide(tc[i]);
+						self.elmHide(tc[i]);
 					}
 				};
-				addClass(elmToManage, "menu");
+				self.addClass(elmToManage, "menu");
 				if (objLayout.bar)
-					addClass(elmToManage, "menubar");
+					self.addClass(elmToManage, "menubar");
 				for (i = 0, len = elmToManageChildren.length; i < len; ++i)
 				{
 					elm = elmToManageChildren[i];
@@ -946,17 +974,17 @@ JsLayoutManager = (function() {
 					elm.onmouseleave = fhide;
 				}
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
+				self.setLayout(elmToManage, objLayout);
 				for (i = 0, len = elmToManageChildren.length; i < len; ++i)
 				{
 					cc = elmToManageChildren[i].children;
 					for (j = 0, jlen = cc.length; j < jlen; ++j)
 					{
-						elmHide(cc[j]);
-						manageLayout(cc[j]);
+						self.elmHide(cc[j]);
+						self.manageLayout(cc[j]);
 					}
 				}
-				manageLayout(elmToManage.parentNode);
+				self.manageLayout(elmToManage.parentNode);
 			}
 
 			return false;
@@ -967,117 +995,117 @@ JsLayoutManager = (function() {
 			//creazione header
 			if (!objLayout.ok)
 			{
-				setCss(elmToManage, {overflow: 'hidden', position: 'absolute'});
-				addClass(elmToManage, "exclude");
+				self.setCss(elmToManage, {overflow: 'hidden', position: 'absolute'});
+				self.addClass(elmToManage, "exclude");
 				isVisible = (objLayout.o === 'w' || objLayout.o === 'e');
 
-				removeChildrenByClass(elmToManage, "slmignore");
+				self.removeChildrenByClass(elmToManage, "slmignore");
 				header = document.createElement('div');
-				addClass(header, "slmignore tabheader");
-				setCss(header, {"position": "absolute", "overflow": "hidden"});
+				self.addClass(header, "slmignore tabheader");
+				self.setCss(header, {"position": "absolute", "overflow": "hidden"});
 				elmToManage.insertBefore(header, elmToManage.firstChild);
 				csize = elmToManageChildren.length;
 				for (i = 0; i < csize; i++)
 				{
 					cc = elmToManageChildren[i];
-					pt = getLayout(cc);
+					pt = self.getLayout(cc);
 					pt.title = (pt.title === undefined) ? "tab " + i : pt.title;
 					s = document.createElement('div');
 					s.innerHTML = pt.title;
 					header.appendChild(s);
-					setCss(s, {"display": isVisible ? "block" : "inline-block"});
+					self.setCss(s, {"display": isVisible ? "block" : "inline-block"});
 					s.onclick = ((function(j) {
 						return function() {
-							removeClassForChildren(header, "selected");
-							addClass(this, "selected");
+							self.removeClassForChildren(header, "selected");
+							self.addClass(this, "selected");
 							if (objLayout.sel === j) {
 								objLayout.sel = undefined;
 							} else {
 								objLayout.sel = j;
 							}
-							setLayout(elmToManage, objLayout);
-							manageLayout(elmToManage);
+							self.setLayout(elmToManage, objLayout);
+							self.manageLayout(elmToManage);
 						};
 					})(i));
-					if (getCss(cc, "overflow") === "visible")
-						setCss(cc, {"overflow": "auto"});
+					if (self.getCss(cc, "overflow") === "visible")
+						self.setCss(cc, {"overflow": "auto"});
 				}
 				switch (objLayout.o)
 				{
 					case 'n':
-						setCss(elmToManage, {top: 0, left: 0, right: 0, bottom: 'auto', width: 'auto', height: addStr_px(objLayout.h)});
-						setCss(header, {bottom: 0, left: 0, right: 0});
+						self.setCss(elmToManage, {top: 0, left: 0, right: 0, bottom: 'auto', width: 'auto', height: self.addStr_px(objLayout.h)});
+						self.setCss(header, {bottom: 0, left: 0, right: 0});
 						break;
 					case 's':
-						setCss(elmToManage, {bottom: 0, left: 0, right: 0, top: 'auto', width: 'auto', height: addStr_px(objLayout.h)});
-						setCss(header, {top: 0, left: 0, right: 0});
+						self.setCss(elmToManage, {bottom: 0, left: 0, right: 0, top: 'auto', width: 'auto', height: self.addStr_px(objLayout.h)});
+						self.setCss(header, {top: 0, left: 0, right: 0});
 						break;
 					case 'w':
-						setCss(elmToManage, {top: 0, bottom: 0, left: 0, right: 'auto', height: 'auto', width: addStr_px(objLayout.w)});
-						setCss(header, {top: 0, bottom: 0, right: 0});
+						self.setCss(elmToManage, {top: 0, bottom: 0, left: 0, right: 'auto', height: 'auto', width: self.addStr_px(objLayout.w)});
+						self.setCss(header, {top: 0, bottom: 0, right: 0});
 						break;
 					case 'e':
-						setCss(elmToManage, {top: 0, bottom: 0, right: 0, left: 'auto', height: 'auto', width: addStr_px(objLayout.w)});
-						setCss(header, {top: 0, bottom: 0, left: 0});
+						self.setCss(elmToManage, {top: 0, bottom: 0, right: 0, left: 'auto', height: 'auto', width: self.addStr_px(objLayout.w)});
+						self.setCss(header, {top: 0, bottom: 0, left: 0});
 						break;
 				}
 
 				objLayout.ok = true;
-				setLayout(elmToManage, objLayout);
-				invalidate(elmToManage.parentNode);
+				self.setLayout(elmToManage, objLayout);
+				self.invalidate(elmToManage.parentNode);
 			}
 
 			//using header as variable name overwrite the header declared inside the above if statement
 			//that is a closure variable used in onclick event
-			var myHeader = getChildrenByClass(elmToManage, "tabheader")[0];
+			var myHeader = self.getChildrenByClass(elmToManage, "tabheader")[0];
 
-			var full_size = getFullElmSize(myHeader);
-			var hs = addStr_px(full_size.heigth);
-			var ws = addStr_px(full_size.width);
+			var full_size = self.getFullElmSize(myHeader);
+			var hs = self.addStr_px(full_size.heigth);
+			var ws = self.addStr_px(full_size.width);
 			var opened = (objLayout.sel !== undefined);
-			setCss(elmToManageChildren, {position: 'absolute'});
+			self.setCss(elmToManageChildren, {position: 'absolute'});
 			switch (objLayout.o)
 			{
 				case 'n':
-					setCss(elmToManageChildren, {top: 0, left: 0, right: 0, bottom: hs});
-					setCss(elmToManage, {height: (opened ? addStr_px(objLayout.h) : hs)});
+					self.setCss(elmToManageChildren, {top: 0, left: 0, right: 0, bottom: hs});
+					self.setCss(elmToManage, {height: (opened ? self.addStr_px(objLayout.h) : hs)});
 					break;
 				case 's':
-					setCss(elmToManageChildren, {bottom: 0, left: 0, right: 0, top: hs});
-					setCss(elmToManage, {height: (opened ? addStr_px(objLayout.h) : hs)});
+					self.setCss(elmToManageChildren, {bottom: 0, left: 0, right: 0, top: hs});
+					self.setCss(elmToManage, {height: (opened ? self.addStr_px(objLayout.h) : hs)});
 					break;
 				case 'w':
-					setCss(elmToManageChildren, {top: 0, bottom: 0, left: 0, right: ws});
-					setCss(elmToManage, {width: (opened ? addStr_px(objLayout.w) : ws)});
+					self.setCss(elmToManageChildren, {top: 0, bottom: 0, left: 0, right: ws});
+					self.setCss(elmToManage, {width: (opened ? self.addStr_px(objLayout.w) : ws)});
 					break;
 				case 'e':
-					setCss(elmToManageChildren, {top: 0, bottom: 0, right: 0, left: ws});
-					setCss(elmToManage, {width: (opened ? addStr_px(objLayout.w) : ws)});
+					self.setCss(elmToManageChildren, {top: 0, bottom: 0, right: 0, left: ws});
+					self.setCss(elmToManage, {width: (opened ? self.addStr_px(objLayout.w) : ws)});
 					break;
 			}
-			elmHide(elmToManageChildren);
+			self.elmHide(elmToManageChildren);
 			if (objLayout.sel !== undefined)
-				elmShow(elmToManageChildren[objLayout.sel]);
+				self.elmShow(elmToManageChildren[objLayout.sel]);
 
 			return false;
 
 		}
 	};
 
-	this.manageLayout = function(elmToManage)
+	self.manageLayout = function(elmToManage)
 	{
 
-		var objLayout = getLayout(elmToManage);
+		var objLayout = self.getLayout(elmToManage);
 
 		//funzioni di geomerty handling
 		var elmToManageChildren;
-		var myLayoutFunction = layoutFunctions[objLayout.sz];
+		var myLayoutFunction = self.layoutFunctions[objLayout.sz];
 
 		var propagate = function()
 		{
-			var i, len, elm, position = getCss(elmToManage, "position");
+			var i, len, elm, position = self.getCss(elmToManage, "position");
 			if (!position || position === "static")
-				setCss(elmToManage, {"position": "relative"});
+				self.setCss(elmToManage, {"position": "relative"});
 
 			var ttc = [];
 			elmToManageChildren = [];
@@ -1085,12 +1113,12 @@ JsLayoutManager = (function() {
 			for (i = 0, len = children.length; i < len; ++i)
 			{
 				elm = children[i];
-				if (!hasClass(elm, "slmignore"))
+				if (!self.hasClass(elm, "slmignore"))
 				{
 					ttc.push(elm);
-					if (!hasClass(elm, "exclude"))
+					if (!self.hasClass(elm, "exclude"))
 					{
-						setCss(elm, {height: "", width: ""});
+						self.setCss(elm, {height: "", width: ""});
 						elmToManageChildren.push(elm);
 					}
 				}
@@ -1104,12 +1132,12 @@ JsLayoutManager = (function() {
 				elm = ttc[i];
 				if (elm.clientWidth && elm.clientHeight) //is it visible ?
 				{
-					manageLayout(elm);
+					self.manageLayout(elm);
 				}
 			}
 		};
 
 		propagate();//propagate event to the children
 	};
-	return this;
-})();
+	return self;
+};
