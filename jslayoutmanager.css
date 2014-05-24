@@ -11,6 +11,6 @@
 .menu{ background-color:grey;z-index:120;}
 .menu>*{ background-color:lightgrey;}
 ul.menu{ padding:0px;margin:0px;background-color:lightgrey;}
-ul.menu>li{list-style-type: none;cursor: default;background: linear-gradient(#DDDDFF, #EEEEFF);border: 1px solid grey;margin: 0px;padding: 1px; color: black;}
+ul.menu>li{list-style-type: none;cursor: default;background: linear-gradient(#DDDDFF, #EEEEFF);border: 1px solid grey;margin: 0px;padding: 1px; color: black;white-space: nowrap;}
 ul.menu>li:hover{background: linear-gradient(#73A5C7, #7878EC);color: white;}
 ul.menubar>li{display:inline-block;};
