@@ -65,7 +65,7 @@
 					if (show) {
 						var isBlock = getComputedStyle(elm, null).display === "block";
 						var mousePos = JsLayoutManager.getMousePos(evt);
-						//console.log(mousePos.x + " : " + el.offsetLeft);
+						//console.log(mousePos.x + " : " + elm.offsetLeft + " :: " + mousePos.y + " : " + elm.offsetTop);
 						currClass += " show-insertion-" + (isBlock ? "v" : "h") + "a";
 					}
 					if (elm.className !== currClass)
@@ -105,7 +105,7 @@
 			function handle_mouseup(e) {
 				if (drag_mouse_point) {
 					var target = JsLayoutManager.getEventSource(e);
-					console.log(target);
+					//console.log(target);
 					if (drag_mouse_clone)
 					{
 						JsLayoutManager.setCss(drag_mouse_clone, {
@@ -132,7 +132,7 @@
 			function startDragPalette(e)
 			{
 				var target = JsLayoutManager.getEventSource(e);
-				console.log(target);
+				//console.log(target);
 				drag_mouse_point = JsLayoutManager.getMousePos(e);
 				drag_mouse_point.x++;
 				drag_mouse_point.y++;
@@ -152,6 +152,44 @@
 				JsLayoutManager.cancelEvent(e, true);
 				JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
 				JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
+			}
+			
+			var currentWidgetId = false;
+			function showPropertiesFor(event)
+			{
+				var target = JsLayoutManager.getEventSource(event);
+				if(target)
+				{
+					var elm = document.getElementById('widget-propery-type-name');
+					if(elm)
+					{
+						currentWidgetId = JsLayoutManager.getAutoId(target);
+						elm.innerHTML = "Widget " + target.nodeName + " > " + currentWidgetId;
+						elm = document.getElementById('widget-propery-id');
+						if(elm)
+						{
+							elm.value = currentWidgetId;
+						}
+					}
+				} else {
+					currentWidgetId = false;
+				}
+			}
+			function currWidgetSetId(theId)
+			{
+				if(currentWidgetId)
+				{
+					if(document.getElementById(theId))
+					{
+						alert("This id is already in use : " + theId);
+						return;
+					}
+					var elm = document.getElementById(currentWidgetId);
+					if(elm)
+					{
+						elm.id = currentWidgetId = theId;
+					}
+				}
 			}
 		</script>
 	</head>
@@ -321,17 +359,23 @@
 						</div>
 						<div data-layout="ex:1,sz:'boxV'">
 							<div data-layout="p:1,ex:1,sz:'tab'">
-								<div data-layout="title:'Unsaved 1'">
-									<div>Look on the left , there is an accordion
+								<div data-layout="title:'Unsaved 1'" onclick="showPropertiesFor(event);">
+									<div id="x09s">Look on the left , there is an accordion
 										<div class="exclude" style="background:red" data-layout="sz:'absolute',x:10,y:20,w:100,h:100">ABSOLUTE</div>
 									</div>
 								</div>
-								<div data-layout="title:'Unsaved 2'">
+								<div data-layout="title:'Unsaved 2'" onclick="showPropertiesFor(event);">
 									<form>
-										<label>Age <input type="number" name="age"></label>
-										<label>Name <input type="text" name="name"></label>
-										<label>Address <input type="text" name="address"></label>
-										<label>Notes <textarea name="notes"></textarea></label>
+										<div id="x097s">											
+											<label>Age <input type="number" name="age"></label>
+											<label>Name <input type="text" name="name"></label>
+										</div>
+										<div>											
+											<label>Address <input type="text" name="address"></label>
+										</div>
+										<div>											
+											<label>Notes <textarea name="notes"></textarea></label>
+										</div>
 									</form>
 								</div>
 							</div>
@@ -340,10 +384,11 @@
 					<div data-layout="ex:1,sz:'boxV'" id="box-properties">
 						<input type="text"  data-layout="ex:1" placeholder="&lt;Search Widgets&gt;">
 						<select multiple="multiple" data-layout="ex:1"></select>
-						<div>Widget input1 options</div>
+						<div id="widget-propery-type-name">Widget input1 options</div>
 						<div data-layout="p:1,ex:1,sz:'tab'">
 							<div data-layout="title:'General'">
 								<table>
+									<tr><td>ID</td><td><input type="text" id="widget-propery-id" onchange="currWidgetSetId(this.value)"></td></tr>
 									<tr><td>Name</td><td><input type="text"></td></tr>
 									<tr><td>Editable</td><td><input type="checkbox"></td></tr>
 									<tr><td>Maximun length</td><td><input type="number"></td></tr>

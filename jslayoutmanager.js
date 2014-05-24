@@ -12,6 +12,15 @@
 JsLayoutManager = new function() {
 
 	var self = this;
+	var nextID = 1;
+
+	self.getAutoId = function(elm){
+		if(!elm.id)
+		{
+			elm.id = 'autoID_' + (nextID++);
+		}
+		return elm.id;
+	};
 
 	self.isSpace = function(ch) {
 		return (ch === " ") || (ch === "\t") || (ch === "\n") || (ch === "\r") || (ch === "\v");
