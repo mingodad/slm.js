@@ -8,13 +8,14 @@
 	Released under the GNU LESSER GENERAL PUBLIC LICENSE  Version 3
 	
 */
-JsLayoutManager = function() {
 
-	var isSpace = function( ch ) {
+JsLayoutManager = (function() {
+
+	this.isSpace = function( ch ) {
 			return (ch === " ") || (ch === "\t") || (ch === "\n") || (ch === "\r") || (ch === "\v");
 	};
 
-	var strHasWord = function(str, word){
+	this.strHasWord = function(str, word){
 		var found = str.indexOf(word);
 		while(found >= 0) {
 			if(found === 0){
@@ -31,7 +32,7 @@ JsLayoutManager = function() {
 		return false;
 	};
 
-	var strRemoveWord = function(str, word){
+	this.strRemoveWord = function(str, word){
 		var found = str.indexOf(word);
 		while(found >= 0) {
 			if(found === 0){
@@ -55,11 +56,11 @@ JsLayoutManager = function() {
 
 	if(document.classList)
 	{
-		var hasClass = function(elm, className) {
+		this.hasClass = function(elm, className) {
 			return className && elm.classList.indexOf(className) >= 0;
 		};
 
-		var addClass = function(elm, className) {
+		this.addClass = function(elm, className) {
 			if(className)
 			{
 				if(elm.classList.indexOf(className) >= 0) return;
@@ -67,28 +68,28 @@ JsLayoutManager = function() {
 			}
 		};
 
-		var removeClass = function(elm, className) {
+		this.removeClass = function(elm, className) {
 			elm.classList.remove(className);
 		};	
 	} else {
-		var hasClass = function(elm, className) {
+		this.hasClass = function(elm, className) {
 			var elm_className = elm.className;
 			return elm_className && strHasWord(elm_className, className);
 		};
 
-		var addClass = function(elm, className) {
+		this.addClass = function(elm, className) {
 			if(hasClass(elm, className)) return;
 			var elm_className = elm.className;
 			if(elm_className) elm.className = elm_className + " " + className;
 			else elm.className = className;
 		};
 
-		var removeClass = function(elm, className) {
+		this.removeClass = function(elm, className) {
 			elm.className = strRemoveWord(elm.className, className);
 		};
 	}
 
-	var toggleClass = function(elm, className, doAdd) {
+	this.toggleClass = function(elm, className, doAdd) {
 		if(doAdd) {
 			addClass(elm, className);
 			return;
@@ -96,22 +97,22 @@ JsLayoutManager = function() {
 		removeClass(elm, className);
 	};
 	
-	var isArray = function(obj) { return Object.prototype.toString.call( obj ) === '[object Array]';};
+	this.isArray = function(obj) { return Object.prototype.toString.call( obj ) === '[object Array]';};
 
-	var addEvent = window.addEventListener ? 
+	this.addEvent = window.addEventListener ? 
 		function(obj,evt,fn) {obj.addEventListener(evt,fn,false);} :
 		function(obj,evt,fn) {obj.attachEvent('on'+evt,fn);};
 
-	var removeEvent = window.removeEventListener ?
+	this.removeEvent = window.removeEventListener ?
 		function(obj,evt,fn) {obj.removeEventListener(evt,fn,false);} :
 		function(obj,evt,fn) {obj.detachEvent('on'+evt,fn);};
 
-	var cancelEvent = window.addEventListener ? 
+	this.cancelEvent = window.addEventListener ? 
 		function (e, c) {e.preventDefault(); if (c) e.stopPropagation();}:
 		function (e, c) {e.preventDefault ? e.preventDefault() : e.returnValue = false; if (c) e.cancelBubble = true;};
 	
 	// As taken from the UnderscoreJS utility framework
-	var debounce = function(func, wait, immediate) {
+	this.debounce = function(func, wait, immediate) {
 		var timeout;
 		return function() {
 			var context = this, args = arguments;
@@ -126,7 +127,7 @@ JsLayoutManager = function() {
 		};
 	};
 
-	var getLayout = function(elm)
+	this.getLayout = function(elm)
 	{
 		var json_str = elm.getAttribute("data-layout");
 		if (json_str)
@@ -146,14 +147,14 @@ JsLayoutManager = function() {
 		return {};
 	};
 
-	var setLayout = function(elm, obj)
+	this.setLayout = function(elm, obj)
 	{
 		var objs = JSON.stringify(obj);
 		objs = objs.substr(1, objs.length - 2);
 		elm.setAttribute("data-layout", objs);
 	};
 
-	var invalidate = function(elm)
+	this.invalidate = function(elm)
 	{
 		var objLayout = getLayout(elm);
 		objLayout.ok = false;
@@ -161,7 +162,7 @@ JsLayoutManager = function() {
 		manageLayout(elm);
 	};
 
-	var getFullElmSize = function(elm) {
+	this.getFullElmSize = function(elm) {
 		var elmHeight, elmHMargin, elmWdith, elmWMargin, cs;
 		if (document.all) {// IE
 			elmHeight = elm.currentStyle.height;
@@ -177,7 +178,7 @@ JsLayoutManager = function() {
 		return {heigth : (elmHeight + elmHMargin), width: (elmWdith + elmWMargin)};
 	};
 
-	var setCss = function(elm, kv)
+	this.setCss = function(elm, kv)
 	{
 		var i, len, k, style;
 		var setStyle = function(elm, kv)
@@ -198,16 +199,16 @@ JsLayoutManager = function() {
 			setStyle(elm, kv);
 		}
 	};
-	var getCss = function(elm, k)
+	this.getCss = function(elm, k)
 	{
 		return elm.style[k];
 	};
 
-	var addStr_px = function(x) {
+	this.addStr_px = function(x) {
 		return x + "px";
 	};
 
-	var elmHide = function(elm)
+	this.elmHide = function(elm)
 	{
 		var i, len, style;
 		var setDisplay = function(elm) {
@@ -228,7 +229,7 @@ JsLayoutManager = function() {
 			setDisplay(elm);
 		}
 	};
-	var elmShow = function(elm)
+	this.elmShow = function(elm)
 	{
 		style = elm.style;
 		if (style.hideSavedDisplay)
@@ -240,7 +241,7 @@ JsLayoutManager = function() {
 		}
 	};
 
-	var getChildrenByClass = function(elm, cls, notHaving)
+	this.getChildrenByClass = function(elm, cls, notHaving)
 	{
 		var children = elm.children;
 		var result = [];
@@ -260,7 +261,7 @@ JsLayoutManager = function() {
 		}
 		return result;
 	};
-	var removeChildrenByClass = function(elm, cls)
+	this.removeChildrenByClass = function(elm, cls)
 	{
 		var children = elm.children;
 		var toRemove = getChildrenByClass(elm, cls);
@@ -271,7 +272,7 @@ JsLayoutManager = function() {
 			elm.removeChild(toRemove[i]);
 		}
 	};
-	var removeClassForChildren = function(elm, cls)
+	this.removeClassForChildren = function(elm, cls)
 	{
 		var children = elm.children;
 		var i = 0;
@@ -282,7 +283,7 @@ JsLayoutManager = function() {
 		}
 	};
 	
-	var getPercentage = function(snum)
+	this.getPercentage = function(snum)
 	{
 		if(snum && (typeof snum === "string") && snum.indexOf("%") > 0)
 		{
@@ -292,7 +293,7 @@ JsLayoutManager = function() {
 		return null;
 	};
 
-	var getNumber = function(snum, dflt)
+	this.getNumber = function(snum, dflt)
 	{
 		if(snum && (typeof snum === "string"))
 		{
@@ -301,7 +302,7 @@ JsLayoutManager = function() {
 		return isNaN(snum) ? dflt : snum;
 	};
 
-	var getInteger = function(snum, dflt)
+	this.getInteger = function(snum, dflt)
 	{
 		if(snum && (typeof snum === "string"))
 		{
@@ -310,7 +311,7 @@ JsLayoutManager = function() {
 		return isNaN(snum) ? dflt : snum;
 	};
 
-	var createBorderMirror = function(elm)
+	this.createBorderMirror = function(elm)
 	{
 		var bm = document.createElement('div');
 		bm.className = "resizer-mirror-tmp";
@@ -323,25 +324,25 @@ JsLayoutManager = function() {
 		return bm;
 	};
 
-	var getBorderMirror = function(elm)
+	this.getBorderMirror = function(elm)
 	{
 		var bm = getChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
 		return bm.length ? bm[0] : null;
 	};
 
-	var removeBorderMirror = function(elm)
+	this.removeBorderMirror = function(elm)
 	{
 		removeChildrenByClass(elm.parentNode, "resizer-mirror-tmp");
 	};
 
-	var setCssBorderMirror = function(elm, ocss)
+	this.setCssBorderMirror = function(elm, ocss)
 	{
 		var bm = getBorderMirror(elm);
 		setCss(bm, ocss);
 	};
 
 	//crea gestione resize su target
-	var rsz = function(target)
+	this.manageOnResize = function(target)
 	{
 		var d;
 		var fmousemove = function(e) {
@@ -392,7 +393,7 @@ JsLayoutManager = function() {
 		addEvent(target, "mousedown", fmousedown);
 	};
 
-	var layoutFunctions = {
+	this.layoutFunctions = {
 		absolute: function(elmToManage, objLayout, c)
 		{
 			if (!objLayout.ok)
@@ -489,7 +490,7 @@ JsLayoutManager = function() {
 				elmShow(c0);
 				objLayout.ok = true;
 				setLayout(elmToManage, objLayout);
-				rsz(elmToManage);//crea gestione resize
+				manageOnResize(elmToManage);//crea gestione resize
 			}
 		},
 		boxV: function(elmToManage, objLayout, elmToManageChildren)
@@ -1063,7 +1064,7 @@ JsLayoutManager = function() {
 		}
 	};
 
-	var manageLayout = function(elmToManage)
+	this.manageLayout = function(elmToManage)
 	{
 
 		var objLayout = getLayout(elmToManage);
@@ -1110,5 +1111,5 @@ JsLayoutManager = function() {
 
 		propagate();//propagate event to the children
 	};
-	return manageLayout;
-}();
+	return this;
+})();
