@@ -17,7 +17,9 @@ JsLayoutManager = new function() {
 	self.getAutoId = function(elm){
 		if(!elm.id)
 		{
-			elm.id = 'autoID_' + (nextID++);
+			var newId;
+			while( document.getElementById( (newId = 'autoID_' + (nextID++)) ) );
+			elm.id = newId;
 		}
 		return elm.id;
 	};
