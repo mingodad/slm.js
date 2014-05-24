@@ -1,80 +1,85 @@
 /*
-	JsLayoutManager without third party dependencies.  (https://github.com/mingodad/slm.js)
-	Originally derived from 
-		Simple Layout Manager: simplify the layout management of UI in Single Page Applications 
-		(https://github.com/alexroat/slm.js)
-	Copyright (c) 2014, Domingo Alvarez Duarte - mingodad[at]gmail[dot]com
-	
-	Released under the GNU LESSER GENERAL PUBLIC LICENSE  Version 3
-	
-*/
+ JsLayoutManager without third party dependencies.  (https://github.com/mingodad/slm.js)
+ Originally derived from 
+ Simple Layout Manager: simplify the layout management of UI in Single Page Applications 
+ (https://github.com/alexroat/slm.js)
+ Copyright (c) 2014, Domingo Alvarez Duarte - mingodad[at]gmail[dot]com
+ 
+ Released under the GNU LESSER GENERAL PUBLIC LICENSE  Version 3
+ 
+ */
 
 JsLayoutManager = new function() {
-	
+
 	var self = this;
-	
-	self.isSpace = function( ch ) {
-			return (ch === " ") || (ch === "\t") || (ch === "\n") || (ch === "\r") || (ch === "\v");
+
+	self.isSpace = function(ch) {
+		return (ch === " ") || (ch === "\t") || (ch === "\n") || (ch === "\r") || (ch === "\v");
 	};
 
-	self.strHasWord = function(str, word){
+	self.strHasWord = function(str, word) {
 		var found = str.indexOf(word);
 		var isSpace = self.isSpace;
-		while(found >= 0) {
-			if(found === 0){
-				if( (str.length === word.length) ||
-					(isSpace(str[word.length])) ) return true;
+		while (found >= 0) {
+			if (found === 0) {
+				if ((str.length === word.length) ||
+					(isSpace(str[word.length])))
+					return true;
 			} else {
-				if( isSpace(str[found-1]) ) {
-					if( (str.length === found+word.length) ||
-						(isSpace(str[found+word.length]))) return true;
+				if (isSpace(str[found - 1])) {
+					if ((str.length === found + word.length) ||
+						(isSpace(str[found + word.length])))
+						return true;
 				}
 			}
-			found = str.indexOf(word, found+1);
+			found = str.indexOf(word, found + 1);
 		}
 		return false;
 	};
 
-	self.strRemoveWord = function(str, word){
+	self.strRemoveWord = function(str, word) {
 		var found = str.indexOf(word);
 		var isSpace = self.isSpace;
-		while(found >= 0) {
-			if(found === 0){
-				if(str.length === word.length) return "";
-				if(isSpace(str[word.length])) return str.substring(word.length+1);
+		while (found >= 0) {
+			if (found === 0) {
+				if (str.length === word.length)
+					return "";
+				if (isSpace(str[word.length]))
+					return str.substring(word.length + 1);
 			} else {
-				if( isSpace(str[found-1]) ) {
-					var lastPos = found+word.length;
-					if(str.length === lastPos) {
-						return str.substring(0, found-1);
+				if (isSpace(str[found - 1])) {
+					var lastPos = found + word.length;
+					if (str.length === lastPos) {
+						return str.substring(0, found - 1);
 					}
-					if(isSpace(str[lastPos])) {
-						return str.substring(0, found-1) + str.substring(lastPos);
+					if (isSpace(str[lastPos])) {
+						return str.substring(0, found - 1) + str.substring(lastPos);
 					}
 				}
 			}
-			found = str.indexOf(word, found+1);
+			found = str.indexOf(word, found + 1);
 		}
 		return str;
 	};
 
-	if(document.classList)
+	if (document.classList)
 	{
 		self.hasClass = function(elm, className) {
 			return className && elm.classList.indexOf(className) >= 0;
 		};
 
 		self.addClass = function(elm, className) {
-			if(className)
+			if (className)
 			{
-				if(elm.classList.indexOf(className) >= 0) return;
+				if (elm.classList.indexOf(className) >= 0)
+					return;
 				elm.classList.add(className);
 			}
 		};
 
 		self.removeClass = function(elm, className) {
 			elm.classList.remove(className);
-		};	
+		};
 	} else {
 		self.hasClass = function(elm, className) {
 			var elm_className = elm.className;
@@ -82,10 +87,13 @@ JsLayoutManager = new function() {
 		};
 
 		self.addClass = function(elm, className) {
-			if(self.hasClass(elm, className)) return;
+			if (self.hasClass(elm, className))
+				return;
 			var elm_className = elm.className;
-			if(elm_className) elm.className = elm_className + " " + className;
-			else elm.className = className;
+			if (elm_className)
+				elm.className = elm_className + " " + className;
+			else
+				elm.className = className;
 		};
 
 		self.removeClass = function(elm, className) {
@@ -94,60 +102,88 @@ JsLayoutManager = new function() {
 	}
 
 	self.toggleClass = function(elm, className, doAdd) {
-		if(doAdd) {
+		if (doAdd) {
 			self.addClass(elm, className);
 			return;
 		}
 		self.removeClass(elm, className);
 	};
-	
-	self.isArray = function(obj) { return Object.prototype.toString.call( obj ) === '[object Array]';};
 
-	self.addEvent = window.addEventListener ? 
-		function(obj,evt,fn) {obj.addEventListener(evt,fn,false);} :
-		function(obj,evt,fn) {obj.attachEvent('on'+evt,fn);};
-
-	self.removeEvent = window.removeEventListener ?
-		function(obj,evt,fn) {obj.removeEventListener(evt,fn,false);} :
-		function(obj,evt,fn) {obj.detachEvent('on'+evt,fn);};
-
-	self.cancelEvent = window.addEventListener ? 
-		function (e, c) {e.preventDefault(); if (c) e.stopPropagation();}:
-		function (e, c) {e.preventDefault ? e.preventDefault() : e.returnValue = false; if (c) e.cancelBubble = true;};
-
-	self.addEventMulti = function(obj, evts, fn){
-		var ary = evts.split(' ');
-		for(var i in ary) self.addEvent(obj, ary[i], fn);
+	self.isArray = function(obj) {
+		return Object.prototype.toString.call(obj) === '[object Array]';
 	};
 
-	self.removeEventMulti = function(obj, evts, fn){
+	self.addEvent = window.addEventListener ?
+		function(obj, evt, fn) {
+			obj.addEventListener(evt, fn, false);
+		} :
+		function(obj, evt, fn) {
+			obj.attachEvent('on' + evt, fn);
+		};
+
+	self.removeEvent = window.removeEventListener ?
+		function(obj, evt, fn) {
+			obj.removeEventListener(evt, fn, false);
+		} :
+		function(obj, evt, fn) {
+			obj.detachEvent('on' + evt, fn);
+		};
+
+	self.cancelEvent = window.addEventListener ?
+		function(e, c) {
+			e.preventDefault();
+			if (c)
+				e.stopPropagation();
+		} :
+		function(e, c) {
+			e.preventDefault ? e.preventDefault() : e.returnValue = false;
+			if (c)
+				e.cancelBubble = true;
+		};
+
+	self.addEventMulti = function(obj, evts, fn) {
 		var ary = evts.split(' ');
-		for(var i in ary) self.removeEvent(obj, ary[i], fn);
+		for (var i in ary)
+			self.addEvent(obj, ary[i], fn);
+	};
+
+	self.removeEventMulti = function(obj, evts, fn) {
+		var ary = evts.split(' ');
+		for (var i in ary)
+			self.removeEvent(obj, ary[i], fn);
 	};
 
 	self.getEventSource = function(evt) {
 		var target = evt.target ? evt.target : evt.srcElement;
 		return (target.nodeType === 3) ? target.parentNode : target;
 	};
-	self.getOffsetX = function(evt) {return evt.changedTouches ? evt.changedTouches[0].offsetX : evt.offsetX || evt.layerX;};
-	self.getOffsetY = function(evt) {return evt.changedTouches ? evt.changedTouches[0].offsetY : evt.offsetY || evt.layerY;};
-	self.getClientX = function(evt) {return evt.changedTouches ? evt.changedTouches[0].pageX : evt.clientX;};
-	self.getClientY = function(evt) {return evt.changedTouches ? evt.changedTouches[0].pageY : evt.clientY;};
+	self.getOffsetX = function(evt) {
+		return evt.changedTouches ? evt.changedTouches[0].offsetX : evt.offsetX || evt.layerX;
+	};
+	self.getOffsetY = function(evt) {
+		return evt.changedTouches ? evt.changedTouches[0].offsetY : evt.offsetY || evt.layerY;
+	};
+	self.getClientX = function(evt) {
+		return evt.changedTouches ? evt.changedTouches[0].pageX : evt.clientX;
+	};
+	self.getClientY = function(evt) {
+		return evt.changedTouches ? evt.changedTouches[0].pageY : evt.clientY;
+	};
 
-	self.getMousePos = function (evt){
-		if (('targetTouches' in evt) && evt.targetTouches.length){
+	self.getMousePos = function(evt) {
+		if (('targetTouches' in evt) && evt.targetTouches.length) {
 			var t = evt.targetTouches[0];
-			 return { x: t.pageX, y: t.pageY };
+			return {x: t.pageX, y: t.pageY};
 		} else if (evt.pageX || evt.pageY)
-			 return { x: evt.pageX, y: evt.pageY };
+			return {x: evt.pageX, y: evt.pageY};
 		else {
 			var delm = document.documentElement;
 			var bdy = document.body;
-			return { x: evt.clientX + delm.scrollLeft - bdy.clientLeft,
-								y: evt.clientY + delm.scrollTop  - bdy.clientTop };
+			return {x: evt.clientX + delm.scrollLeft - bdy.clientLeft,
+				y: evt.clientY + delm.scrollTop - bdy.clientTop};
 		}
 	};
-	
+
 	// As taken from the UnderscoreJS utility framework
 	self.debounce = function(func, wait, immediate) {
 		var timeout;
@@ -155,12 +191,14 @@ JsLayoutManager = new function() {
 			var context = this, args = arguments;
 			var later = function() {
 				timeout = null;
-				if (!immediate) func.apply(context, args);
+				if (!immediate)
+					func.apply(context, args);
 			};
 			var callNow = immediate && !timeout;
 			clearTimeout(timeout);
 			timeout = setTimeout(later, wait);
-			if (callNow) func.apply(context, args);
+			if (callNow)
+				func.apply(context, args);
 		};
 	};
 
@@ -212,7 +250,7 @@ JsLayoutManager = new function() {
 			elmWdith = elm.offsetWidth;
 			elmWMargin = parseInt(cs.marginLeft) + parseInt(cs.marginRight);
 		}
-		return {heigth : (elmHeight + elmHMargin), width: (elmWdith + elmWMargin)};
+		return {heigth: (elmHeight + elmHMargin), width: (elmWdith + elmWMargin)};
 	};
 
 	self.setCss = function(elm, kv)
@@ -224,7 +262,7 @@ JsLayoutManager = new function() {
 			for (k in kv)
 			{
 				style[k] = kv[k];
-			}			
+			}
 		};
 		if (self.isArray(elm))
 		{
@@ -287,7 +325,7 @@ JsLayoutManager = new function() {
 		{
 			var child = children[i];
 			var ok_to_add = self.hasClass(child, cls);
-			if(notHaving)
+			if (notHaving)
 			{
 				ok_to_add = !ok_to_add;
 			}
@@ -319,10 +357,10 @@ JsLayoutManager = new function() {
 			self.removeClass(children[i], cls);
 		}
 	};
-	
+
 	self.getPercentage = function(snum)
 	{
-		if(snum && (typeof snum === "string") && snum.indexOf("%") > 0)
+		if (snum && (typeof snum === "string") && snum.indexOf("%") > 0)
 		{
 			snum = parseFloat(snum);
 			return isNaN(snum) ? null : snum;
@@ -332,7 +370,7 @@ JsLayoutManager = new function() {
 
 	self.getNumber = function(snum, dflt)
 	{
-		if(snum && (typeof snum === "string"))
+		if (snum && (typeof snum === "string"))
 		{
 			snum = parseFloat(snum);
 		}
@@ -341,7 +379,7 @@ JsLayoutManager = new function() {
 
 	self.getInteger = function(snum, dflt)
 	{
-		if(snum && (typeof snum === "string"))
+		if (snum && (typeof snum === "string"))
 		{
 			snum = parseInt(snum);
 		}
@@ -455,7 +493,7 @@ JsLayoutManager = new function() {
 				self.setCss(elmToManage, {overflow: 'hidden'});
 				//vincola il contenitore alla finestra e aggancia gli eventi di resize
 				self.setCss(elmToManage, {"position": "fixed", "left": 0, "top": 0, "right": 0, "bottom": 0, "width": "", "height": ""});
-				window.onresize = propagate;
+				self.addEvent(window, "resize", propagate);
 				//figli: il dialog accetta un solo figlio e lo massimizza
 				self.elmHide(c);
 				c0 = c[0];
@@ -494,9 +532,9 @@ JsLayoutManager = new function() {
 					"width": hh, "height": hh, "background": "rgb(230, 102, 102)", "text-align": "center", "cursor": "default"});
 				closeDlg.innerHTML = "x";
 				hdlg.appendChild(closeDlg);
-				closeDlg.onclick = function() {
+				self.addEvent(closeDlg, "click", function() {
 					elmToManage.parentNode.removeChild(elmToManage);
-				};
+				});
 				//gestione spostamento
 
 				handle_mousemove = function(e) {
@@ -511,15 +549,15 @@ JsLayoutManager = new function() {
 				handle_mouseup = function(e) {
 					drag = null;
 					self.setLayout(elmToManage, objLayout);
-					document.onmousemove = null;
-					document.onmouseup = null;
+					self.removeEvent(document, "mousemove", handle_mousemove);
+					self.removeEvent(document, "mouseup", handle_mouseup);
 				};
-				hdlg.onmousedown = function(e) {
+				self.addEvent(hdlg, "mousedown", function(e) {
 					objLayout = self.getLayout(elmToManage);
 					drag = [e.pageX - objLayout.x, e.pageY - objLayout.y];
-					document.onmousemove = handle_mousemove;
-					document.onmouseup = handle_mouseup;
-				};
+					self.addEvent(document, "mousemove", handle_mousemove);
+					self.addEvent(document, "mouseup", handle_mouseup);
+				});
 				//figli: il dialog accetta un solo figlio e lo massimizza
 				self.elmHide(c);
 				var c0 = c[0];
@@ -631,7 +669,7 @@ JsLayoutManager = new function() {
 					header.appendChild(s);
 					self.toggleClass(s, "selected", i === objLayout.sel);
 					self.setCss(s, {"display": isVisible ? "block" : "inline-block"});
-					s.onclick = (function(j) {
+					self.addEvent(s, "click",(function(j) {
 						return function() {
 							self.removeClass(header.children[objLayout.sel], "selected");
 							objLayout.sel = j;
@@ -639,7 +677,7 @@ JsLayoutManager = new function() {
 							self.addClass(this, "selected");
 							self.manageLayout(elmToManage);
 						};
-					})(i);
+					})(i));
 				}
 				objLayout.ok = true;
 				self.setLayout(elmToManage, objLayout);
@@ -674,13 +712,13 @@ JsLayoutManager = new function() {
 					self.addClass(s, "slmignore accheader");
 					s.innerHTML = ct.title;
 					cc.parentNode.insertBefore(s, cc);
-					s.onclick = (function(j) {
+					self.addEvent(s, "click", (function(j) {
 						return function() {
 							objLayout.sel = j;
 							self.setLayout(elmToManage, objLayout);
 							self.manageLayout(elmToManage);
 						};
-					})(i);
+					})(i));
 				}
 				objLayout.ok = true;
 				self.setLayout(elmToManage, objLayout);
@@ -716,24 +754,24 @@ JsLayoutManager = new function() {
 				sn.innerHTML = "NEXT";
 				self.setCss(sn, {"position": "absolute", "right": 0, "top": 0, "overflow": "hidden"});
 				elmToManage.insertBefore(sn, elmToManage.firstChild);
-				sn.onclick = function() {
+				self.addEvent(sn, "click", function() {
 					var csize = elmToManageChildren.length;
 					objLayout.sel = (objLayout.sel + csize + 1) % csize;
 					self.setLayout(elmToManage, objLayout);
 					self.manageLayout(elmToManage);
-				};
+				});
 
 				sp = document.createElement('span');
 				self.addClass(sp, "slmignore shift");
 				sp.innerHTML = "PREV";
 				self.setCss(sp, {"position": "absolute", "left": 0, "top": 0, "overflow": "hidden"});
 				elmToManage.insertBefore(sp, elmToManage.firstChild);
-				sp.onclick = function() {
+				self.addEvent(sp, "click", function() {
 					var csize = elmToManageChildren.length;
 					objLayout.sel = (objLayout.sel + csize - 1) % csize;
 					self.setLayout(elmToManage, objLayout);
 					self.manageLayout(elmToManage);
-				};
+				});
 				objLayout.ok = true;
 				self.setLayout(elmToManage, objLayout);
 			}
@@ -752,7 +790,7 @@ JsLayoutManager = new function() {
 			if (!objLayout.ok)
 			{
 				i = self.getPercentage(objLayout.sash);
-				if(i !== null)
+				if (i !== null)
 				{
 					objLayout.sash = (elmToManage.clientHeight / 100.0) * i;
 				} else {
@@ -773,7 +811,7 @@ JsLayoutManager = new function() {
 						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
 						{
 							var bm = self.getBorderMirror(spl);
-							if(bm)
+							if (bm)
 							{
 								self.setCss(bm, {"top": self.addStr_px(offset)});
 							}
@@ -813,9 +851,9 @@ JsLayoutManager = new function() {
 				self.setLayout(elmToManage, objLayout);
 			}
 			//adattamento children	
-			self.setCss(elmToManageChildren[0], {"position": "absolute", "left": 0, 
+			self.setCss(elmToManageChildren[0], {"position": "absolute", "left": 0,
 				"top": 0, "right": 0, "height": self.addStr_px(objLayout.sash)});
-			self.setCss(elmToManageChildren[1], {"position": "absolute", "left": 0, 
+			self.setCss(elmToManageChildren[1], {"position": "absolute", "left": 0,
 				"top": self.addStr_px(objLayout.sash + 5), "right": 0, "bottom": 0});
 			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
 				{"top": self.addStr_px(objLayout.sash)});
@@ -827,9 +865,9 @@ JsLayoutManager = new function() {
 			//creazione splitter
 			if (!objLayout.ok)
 			{
-				self.setCss(elmToManage, {overflow: 'hidden'}); 
+				self.setCss(elmToManage, {overflow: 'hidden'});
 				i = self.getPercentage(objLayout.sash);
-				if(i !== null)
+				if (i !== null)
 				{
 					objLayout.sash = (elmToManage.clientWidth / 100.0) * i;
 				} else {
@@ -838,7 +876,7 @@ JsLayoutManager = new function() {
 				self.setLayout(elmToManage, objLayout);
 				spl = document.createElement('div');
 				self.addClass(spl, "slmignore splitter");
-				self.setCss(spl, {"position": "absolute", "top": 0, 
+				self.setCss(spl, {"position": "absolute", "top": 0,
 					"bottom": 0, "width": "5px", "overflow": "hidden", "cursor": "col-resize"});
 				elmToManage.insertBefore(spl, elmToManage.firstChild);
 				drag = -1;
@@ -849,7 +887,7 @@ JsLayoutManager = new function() {
 						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
 						{
 							var bm = self.getBorderMirror(spl);
-							if(bm)
+							if (bm)
 							{
 								self.setCss(bm, {"left": self.addStr_px(offset)});
 							}
@@ -888,9 +926,9 @@ JsLayoutManager = new function() {
 				objLayout.ok = true;
 				self.setLayout(elmToManage, objLayout);
 			}
-			self.setCss(elmToManageChildren[0], {"position": "absolute", "top": 0, 
+			self.setCss(elmToManageChildren[0], {"position": "absolute", "top": 0,
 				"bottom": 0, "left": 0, "width": self.addStr_px(objLayout.sash)});
-			self.setCss(elmToManageChildren[1], {"position": "absolute", "top": 0, 
+			self.setCss(elmToManageChildren[1], {"position": "absolute", "top": 0,
 				"left": self.addStr_px(objLayout.sash + 5), "bottom": 0, "right": 0});
 			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
 				{"left": self.addStr_px(objLayout.sash)});
@@ -900,7 +938,7 @@ JsLayoutManager = new function() {
 		{
 			self.setCss(elmToManage, {overflow: 'hidden'});
 			var i = self.getPercentage(objLayout.sash);
-			if(i !== null)
+			if (i !== null)
 			{
 				objLayout.snap = (elmToManage.clientWidth / 100.0) * i;
 			} else {
@@ -970,8 +1008,8 @@ JsLayoutManager = new function() {
 				for (i = 0, len = elmToManageChildren.length; i < len; ++i)
 				{
 					elm = elmToManageChildren[i];
-					elm.onmouseenter = fshow;
-					elm.onmouseleave = fhide;
+					self.addEvent(elm, "mouseenter",fshow);
+					self.addEvent(elm, "mouseleave", fhide);
 				}
 				objLayout.ok = true;
 				self.setLayout(elmToManage, objLayout);
@@ -1014,7 +1052,7 @@ JsLayoutManager = new function() {
 					s.innerHTML = pt.title;
 					header.appendChild(s);
 					self.setCss(s, {"display": isVisible ? "block" : "inline-block"});
-					s.onclick = ((function(j) {
+					self.addEvent(s, "click", ((function(j) {
 						return function() {
 							self.removeClassForChildren(header, "selected");
 							self.addClass(this, "selected");
@@ -1026,7 +1064,7 @@ JsLayoutManager = new function() {
 							self.setLayout(elmToManage, objLayout);
 							self.manageLayout(elmToManage);
 						};
-					})(i));
+					})(i)));
 					if (self.getCss(cc, "overflow") === "visible")
 						self.setCss(cc, {"overflow": "auto"});
 				}
@@ -1110,7 +1148,7 @@ JsLayoutManager = new function() {
 			var ttc = [];
 			elmToManageChildren = [];
 			var children = elmToManage.children;
-			for (i = 0, len = children.length; i < len; ++i)
+			for (var i = 0, len = children.length; i < len; ++i)
 			{
 				elm = children[i];
 				if (!self.hasClass(elm, "slmignore"))

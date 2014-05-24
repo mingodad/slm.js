@@ -1,315 +1,378 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>GUI Builder</title>
-    <meta name="description" content="Dialogs template to be used in javascript app.">
-    <link rel="stylesheet" href="jslayoutmanager.css">
-    <script type="text/javascript" src="jslayoutmanager.js"></script>
-    <style type="text/css">
-        #box-palette li:hover {background-color:blue; color:white;}
-    </style>
-    <script type="text/javascript">
-        function applyLayoutToBody()
-        {
-            var i, len, layout, children = document.body.children;
-            for(i=0, len=children.length; i < len; ++i)
-            {
-                layout = children[i].getAttribute('data-layout');
-                if(layout)
-                {
-                    JsLayoutManager.manageLayout(children[i]);
-                }
-            }
-        }
-        window.onload = applyLayoutToBody;
-        
-        function dockPaletteShowHide(bval)
-        {
-            JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-palette"));
-        }
-        
-        function dockPropertiesShowHide(bval)
-        {
-            JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-properties"));
-        }
-		
-		var drag_mouse_point = false;
-		var drag_mouse_clone = false;
-		function handle_mousemove(e) {
-			if (drag_mouse_point) {
-				var target = JsLayoutManager.getEventSource(e);
-				//console.log(target);
-				if(drag_mouse_clone)
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<title>GUI Builder</title>
+		<meta name="description" content="Dialogs template to be used in javascript app.">
+		<link rel="stylesheet" href="jslayoutmanager.css">
+		<script type="text/javascript" src="jslayoutmanager.js"></script>
+		<style type="text/css">
+			#box-palette li:hover {background-color:blue; color:white;}
+			.outline-target {
+				/*outline: #33F 1px solid !important;*/
+				outline: 1px solid !important;
+			}
+			.show-insertion-vb {
+				box-shadow: 0 -4px 0 blue  !important;
+			}
+
+			.show-insertion-va {
+				box-shadow: 0 4px 0 blue  !important;
+			}
+
+			.show-insertion-hb {
+				box-shadow: -4px 0 0 blue  !important;
+			}
+
+			.show-insertion-ha {
+				box-shadow: 4px 0 0 blue  !important;
+			}
+		</style>
+		<script type="text/javascript">
+			function applyLayoutToBody()
+			{
+				var i, len, layout, children = document.body.children;
+				for (i = 0, len = children.length; i < len; ++i)
 				{
-					drag_mouse_point = JsLayoutManager.getMousePos(e);
-					drag_mouse_point.x++;
-					drag_mouse_point.y++;
-					JsLayoutManager.setCss(drag_mouse_clone, {
-						top: JsLayoutManager.addStr_px(drag_mouse_point.y),
-						left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
+					layout = children[i].getAttribute('data-layout');
+					if (layout)
+					{
+						JsLayoutManager.manageLayout(children[i]);
+					}
 				}
 			}
-			JsLayoutManager.cancelEvent(e);
-		};
+			window.onload = applyLayoutToBody;
 
-		function handle_mouseup(e) {
-			if (drag_mouse_point) {
+			function dockPaletteShowHide(bval)
+			{
+				JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-palette"));
+			}
+
+			function dockPropertiesShowHide(bval)
+			{
+				JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-properties"));
+			}
+
+			function showHideInsertionPoint(evt, show, elm) {
+				if(!elm)
+				{
+					elm = JsLayoutManager.getEventSource(evt);					
+				}
+				if (elm) {
+					var currClass = elm.className.replace(/\s*\bshow-insertion-[hv][ab]\b/g, '');
+					if (show) {
+						var isBlock = getComputedStyle(elm, null).display === "block";
+						var mousePos = JsLayoutManager.getMousePos(evt);
+						//console.log(mousePos.x + " : " + el.offsetLeft);
+						currClass += " show-insertion-" + (isBlock ? "v" : "h") + "a";
+					}
+					if (elm.className !== currClass)
+						elm.className = currClass;
+				}
+			}
+
+			var drag_mouse_point = false;
+			var drag_mouse_clone = false;
+			var drag_mouse_target = false;
+			function handle_mousemove(e) {
+				if (drag_mouse_point) {
+					var target = JsLayoutManager.getEventSource(e);
+					//console.log(target);
+					if (target !== drag_mouse_target) {
+						if (drag_mouse_target)
+						{
+							showHideInsertionPoint(e, false, drag_mouse_target);
+						}
+						drag_mouse_target = target;
+						showHideInsertionPoint(e, true, drag_mouse_target);
+					}
+					if (drag_mouse_clone)
+					{
+						drag_mouse_point = JsLayoutManager.getMousePos(e);
+						drag_mouse_point.x++;
+						drag_mouse_point.y++;
+						JsLayoutManager.setCss(drag_mouse_clone, {
+							top: JsLayoutManager.addStr_px(drag_mouse_point.y),
+							left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
+					}
+				}
+				JsLayoutManager.cancelEvent(e);
+			}
+			;
+
+			function handle_mouseup(e) {
+				if (drag_mouse_point) {
+					var target = JsLayoutManager.getEventSource(e);
+					console.log(target);
+					if (drag_mouse_clone)
+					{
+						JsLayoutManager.setCss(drag_mouse_clone, {
+							outline: "",
+							top: JsLayoutManager.addStr_px(e.offsetY),
+							left: JsLayoutManager.addStr_px(e.offsetX)
+						});
+						target.appendChild(document.body.removeChild(drag_mouse_clone));
+					}
+				}
+				if (drag_mouse_target)
+				{
+					showHideInsertionPoint(e, false, drag_mouse_target);
+				}
+				drag_mouse_point = false;
+				drag_mouse_target = false;
+				drag_mouse_clone = false;
+				JsLayoutManager.cancelEvent(e);
+				JsLayoutManager.removeEventMulti(window, "mouseup touchend", handle_mouseup);
+				JsLayoutManager.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
+			}
+			;
+
+			function startDragPalette(e)
+			{
 				var target = JsLayoutManager.getEventSource(e);
 				console.log(target);
-				if(drag_mouse_clone)
+				drag_mouse_point = JsLayoutManager.getMousePos(e);
+				drag_mouse_point.x++;
+				drag_mouse_point.y++;
+				var elmType = target.getAttribute("data-type");
+				if (elmType)
 				{
-					JsLayoutManager.setCss(drag_mouse_clone, {
-						outline: "",
-						top: JsLayoutManager.addStr_px(drag_mouse_point.y-target.offsetTop),
-						left: JsLayoutManager.addStr_px(drag_mouse_point.x-target.offsetLeft)
-					});
-					target.appendChild(document.body.removeChild(drag_mouse_clone));
+					drag_mouse_clone = document.createElement(elmType);
+				} else {
+					drag_mouse_clone = target.cloneNode(true);
 				}
+				document.body.appendChild(drag_mouse_clone);
+				JsLayoutManager.setCss(drag_mouse_clone, {
+					outline: "dotted 1px",
+					position: "absolute",
+					top: JsLayoutManager.addStr_px(drag_mouse_point.y),
+					left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
+				JsLayoutManager.cancelEvent(e, true);
+				JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
+				JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
 			}
-			drag_mouse_point = false;
-			JsLayoutManager.cancelEvent(e);
-			JsLayoutManager.removeEventMulti(window, "mouseup touchend", handle_mouseup);
-			JsLayoutManager.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
-		};
-		
-		function startDragPalette(e)
-		{
-			var target = JsLayoutManager.getEventSource(e);
-			console.log(target);
-			drag_mouse_point = JsLayoutManager.getMousePos(e);
-			drag_mouse_point.x++;
-			drag_mouse_point.y++;
-			drag_mouse_clone = target.cloneNode(true);
-			document.body.appendChild(drag_mouse_clone);
-			JsLayoutManager.setCss(drag_mouse_clone, {
-				outline: "dotted 1px",
-				position: "absolute",
-				top: JsLayoutManager.addStr_px(drag_mouse_point.y),
-				left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
-			JsLayoutManager.cancelEvent(e, true);
-			JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
-			JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
-		}
-    </script>
-</head>
+		</script>
+	</head>
 
-<body>
+	<body>
 
-<div id="root" data-layout="sz:'fullpage'">
-    <div id="main-menu" data-layout="sz:'boxV'">
-		<ul data-layout="ex:1,sz:'menu',bar:1" id="menu">
-			<li>File
-				<ul data-layout="sz:'menu'">
-					<li>New</li>
-					<li>Open</li>
-					<li>Open recent<ul data-layout="sz:'menu'">
-							<li>First</li>
-							<li>Second</li>
-							<li>Third</li>
+		<div id="root" data-layout="sz:'fullpage'">
+			<div id="main-menu" data-layout="sz:'boxV'">
+				<ul data-layout="ex:1,sz:'menu',bar:1" id="menu">
+					<li>File
+						<ul data-layout="sz:'menu'">
+							<li>New</li>
+							<li>Open</li>
+							<li>Open recent<ul data-layout="sz:'menu'">
+									<li>First</li>
+									<li>Second</li>
+									<li>Third</li>
+								</ul>
+							</li>
+							<li>Save</li>
+							<li>Save As</li>
+							<li>Properties</li>
+							<li>Close</li>
+							<li>Quit</li>
 						</ul>
 					</li>
-					<li>Save</li>
-					<li>Save As</li>
-					<li>Properties</li>
-					<li>Close</li>
-					<li>Quit</li>
-				</ul>
-			</li>
-			<li>Edit
-				<ul data-layout="sz:'menu'">
-					<li>Undo</li>
-					<li>Redo</li>
-					<li>Cut</li>
-					<li>Copy</li>
-					<li>Paste</li>
-					<li>Delete</li>
-				</ul>
-			</li>
-			<li>View
-				<ul data-layout="sz:'menu'">
-					<li>Toolbar</li>
-					<li>Statusbar</li>
-					<li>Project Tabs</li>
-					<li>Palete Appearence
+					<li>Edit
 						<ul data-layout="sz:'menu'">
-							<li>Text beside icons</li>
-							<li>Icons only</li>
-							<li>Text only</li>
-							<li>Use samll icons</li>
-						</ul>					
+							<li>Undo</li>
+							<li>Redo</li>
+							<li>Cut</li>
+							<li>Copy</li>
+							<li>Paste</li>
+							<li>Delete</li>
+						</ul>
 					</li>
-					<li class="slmignore"><label>Dock Palette <input type="checkbox" checked="checked" id="dock-palette-checkbox" onchange="dockPaletteShowHide(this.checked);"></label></li>
-					<li>Dock Inspector</li>
-					<li class="slmignore"><label>Dock Properties <input type="checkbox" checked="checked" id="dock-properties-checkbox" onchange="dockPropertiesShowHide(this.checked);"></label></li>
+					<li>View
+						<ul data-layout="sz:'menu'">
+							<li>Toolbar</li>
+							<li>Statusbar</li>
+							<li>Project Tabs</li>
+							<li>Palete Appearence
+								<ul data-layout="sz:'menu'">
+									<li>Text beside icons</li>
+									<li>Icons only</li>
+									<li>Text only</li>
+									<li>Use samll icons</li>
+								</ul>					
+							</li>
+							<li class="slmignore"><label>Dock Palette <input type="checkbox" checked="checked" id="dock-palette-checkbox" onchange="dockPaletteShowHide(this.checked);"></label></li>
+							<li>Dock Inspector</li>
+							<li class="slmignore"><label>Dock Properties <input type="checkbox" checked="checked" id="dock-properties-checkbox" onchange="dockPropertiesShowHide(this.checked);"></label></li>
+						</ul>
+					</li>
+					<li>Project
+						<ul data-layout="sz:'menu'">
+							<li>Next Project</li>
+							<li>Previous Project</li>
+							<li>Unsave Project 1</li>
+						</ul>
+					</li>
+					<li>Help
+						<ul data-layout="sz:'menu'">
+							<li>Developer Reference</li>
+							<li>About</li>
+						</ul>
+					</li>
 				</ul>
-			</li>
-			<li>Project
-				<ul data-layout="sz:'menu'">
-					<li>Next Project</li>
-					<li>Previous Project</li>
-					<li>Unsave Project 1</li>
-				</ul>
-			</li>
-			<li>Help
-				<ul data-layout="sz:'menu'">
-					<li>Developer Reference</li>
-					<li>About</li>
-				</ul>
-			</li>
-		</ul>
-        <div id="toolbar" data-layout="ex:1" style="background-color:#cFc">I'm the toolbar</div>
-        <div data-layout="ex:1,p:1,sash:'80%',sz:'splitH'">
-            <div data-layout="ex:1,sash:'20%',sz:'splitH'">
-                <div data-layout="ex:1,p:1,sz:'accordion'" id="box-palette">
-                    <div data-layout="title:'Actions'">
-                        <ul>
-                            <li>Action Group</li>
-                            <li>Action</li>
-                            <li>Toggle Action</li>
-                            <li>Radio Action</li>
-                            <li>Recent Acion</li>
-                        </ul>                        
-                    </div>
-                    <div data-layout="title:'Top Levels'">
-                        <ul onmousedown="startDragPalette(event);">
-                            <li>Window</li>
-                            <li>Offscreen Window</li>
-                            <li>Dialog Box</li>
-                            <li>About Dialog</li>
-                            <li>Color Selection Dialog</li>
-                            <li>File Chooser Dialog</li>
-                            <li>Font Selection Dialog</li>
-                            <li>Message Dialog</li>
-                            <li>Recent Chooser Dialog</li>
-                            <li>Assistant</li>
-                            <li>Application Chooser Dialog</li>
-                        </ul>
-                    </div>
-                    <div data-layout="title:'Containers'">
-                        <ul>
-                            <li>Box</li>
-                            <li>Grid</li>
-                            <li>Notebook</li>
-                            <li>Frame</li>
-                            <li>Aspect Frame</li>
-                            <li>Menu Bar</li>
-                            <li>Toolbar</li>
-                            <li>Tool Palette</li>
-                            <li>Paned</li>
-                            <li>Button Box</li>
-                            <li>Layout</li>
-                            <li>Fixed</li>
-                            <li>Event Box</li>
-                            <li>Expander</li>
-                            <li>Viewport</li>
-                            <li>Scrolled Window</li>
-                            <li>Alignment</li>
-                        </ul>                        
-                    </div>
-                    <div data-layout="title:'Control and Display'">
-                        <ul>
-                            <li>Button</li>
-                            <li>Toggle Button</li>
-                            <li>Check Button</li>
-                            <li>Radio Button</li>
-                            <li>Switch</li>
-                            <li>Text Entry</li>
-                            <li>Spin Button</li>
-                            <li>Combo Box</li>
-                            <li>Combo Box Text</li>
-                            <li>Image</li>
-                            <li>Label</li>
-                            <li>Accel Label</li>
-                            <li>File Chooser Button</li>
-                            <li>Color Button</li>
-                            <li>Font Button</li>
-                            <li>Link Button</li>
-                            <li>Scale Button</li>
-                            <li>Volume Button</li>
-                            <li>Application Chooser Button</li>
-                            <li>Scale</li>
-                            <li>Scrollbar</li>
-                            <li>Progess Bar</li>
-                            <li>Spinner</li>
-                            <li>Text View</li>
-                            <li>Tree View</li>
-                            <li>Icon View</li>
-                            <li>Handle Box</li>
-                            <li>Status Bar</li>
-                            <li>Calendar</li>
-                            <li>Popup Menu</li>
-                            <li>Separator</li>
-                            <li>Arrow</li>
-                            <li>Drawing Area</li>
-                            <li>Info Bar</li>
-                        </ul>                                                
-                    </div>
-                    <div data-layout="title:'Composite Widgets'">
-                        <ul>
-                            <li>Color Selection</li>
-                            <li>Font Selection</li>
-                            <li>Recent Chooser</li>
-                            <li>File Chooser Widget</li>
-                            <li>Application Chooser Widget</li>
-                        </ul>                        
+				<div id="toolbar" data-layout="ex:1" style="background-color:#cFc">I'm the toolbar</div>
+				<div data-layout="ex:1,p:1,sash:'80%',sz:'splitH'">
+					<div data-layout="ex:1,sash:'20%',sz:'splitH'">
+						<div data-layout="ex:1,p:1,sz:'accordion'" id="box-palette">
+							<div data-layout="title:'Actions'">
+								<ul>
+									<li>Action Group</li>
+									<li>Action</li>
+									<li>Toggle Action</li>
+									<li>Radio Action</li>
+									<li>Recent Acion</li>
+								</ul>                        
+							</div>
+							<div data-layout="title:'Top Levels'">
+								<ul onmousedown="startDragPalette(event);">
+									<li>Window</li>
+									<li>Offscreen Window</li>
+									<li>Dialog Box</li>
+									<li>About Dialog</li>
+									<li>Color Selection Dialog</li>
+									<li>File Chooser Dialog</li>
+									<li>Font Selection Dialog</li>
+									<li>Message Dialog</li>
+									<li>Recent Chooser Dialog</li>
+									<li>Assistant</li>
+									<li>Application Chooser Dialog</li>
+								</ul>
+							</div>
+							<div data-layout="title:'Containers'">
+								<ul>
+									<li>Box</li>
+									<li>Grid</li>
+									<li>Notebook</li>
+									<li>Frame</li>
+									<li>Aspect Frame</li>
+									<li>Menu Bar</li>
+									<li>Toolbar</li>
+									<li>Tool Palette</li>
+									<li>Paned</li>
+									<li>Button Box</li>
+									<li>Layout</li>
+									<li>Fixed</li>
+									<li>Event Box</li>
+									<li>Expander</li>
+									<li>Viewport</li>
+									<li>Scrolled Window</li>
+									<li>Alignment</li>
+								</ul>                        
+							</div>
+							<div data-layout="title:'Control and Display'">
+								<ul onmousedown="startDragPalette(event);">
+									<li data-type="button">Button</li>
+									<li>Toggle Button</li>
+									<li data-type="checkbox">Check Button</li>
+									<li data-type="radio">Radio Button</li>
+									<li>Switch</li>
+									<li data-type="input">Text Entry</li>
+									<li>Spin Button</li>
+									<li>Combo Box</li>
+									<li>Combo Box Text</li>
+									<li data-type="img">Image</li>
+									<li data-type="label">Label</li>
+									<li>Accel Label</li>
+									<li>File Chooser Button</li>
+									<li>Color Button</li>
+									<li>Font Button</li>
+									<li data-type="a">Link Button</li>
+									<li>Scale Button</li>
+									<li>Volume Button</li>
+									<li>Application Chooser Button</li>
+									<li>Scale</li>
+									<li>Scrollbar</li>
+									<li>Progess Bar</li>
+									<li>Spinner</li>
+									<li>Text View</li>
+									<li>Tree View</li>
+									<li>Icon View</li>
+									<li>Handle Box</li>
+									<li>Status Bar</li>
+									<li>Calendar</li>
+									<li>Popup Menu</li>
+									<li>Separator</li>
+									<li>Arrow</li>
+									<li>Drawing Area</li>
+									<li>Info Bar</li>
+								</ul>                                                
+							</div>
+							<div data-layout="title:'Composite Widgets'">
+								<ul>
+									<li>Color Selection</li>
+									<li>Font Selection</li>
+									<li>Recent Chooser</li>
+									<li>File Chooser Widget</li>
+									<li>Application Chooser Widget</li>
+								</ul>                        
 
-                    </div>
-                    <div data-layout="title:'Miscellaneous'">Miscellaneous</div>
-                </div>
-                <div data-layout="ex:1,sz:'boxV'">
-                    <div data-layout="p:1,ex:1,sz:'tab'">
-                        <div data-layout="title:'Unsaved 1'">
-                            <div>Look on the left , there is an accordion
-                                <div class="exclude" style="background:red" data-layout="sz:'absolute',x:10,y:20,w:100,h:100">ABSOLUTE</div>
-                            </div>
-                        </div>
-                        <div data-layout="title:'Unsaved 2'">
-                            <div>Look on the left , there is an accordion
-                                <div class="exclude" style="background:green" data-layout="sz:'absolute',x:10,y:20,w:100,h:100">ABSOLUTE</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div data-layout="ex:1,sz:'boxV'" id="box-properties">
-                <input type="text"  data-layout="ex:1" placeholder="&lt;Search Widgets&gt;">
-                <select multiple="multiple" data-layout="ex:1"></select>
-                <div>Widget input1 options</div>
-                <div data-layout="p:1,ex:1,sz:'tab'">
-                    <div data-layout="title:'General'">
-                        <table>
-                            <tr><td>Name</td><td><input type="text"></td></tr>
-                            <tr><td>Editable</td><td><input type="checkbox"></td></tr>
-                            <tr><td>Maximun length</td><td><input type="number"></td></tr>
-                            <tr><td>Visibility</td><td><input type="checkbox"></td></tr>
-                            <tr><td>Has Frame</td><td><input type="checkbox"></td></tr>
-                            <tr><td>Invisible Character</td><td><input type="text"></td></tr>
-                        </table>
-                    </div>
-                    <div data-layout="title:'Packing'">
-                        <table>
-                            <tr><td>Position</td><td><input type="number"></td></tr>
-                            <tr><td>Padding</td><td><input type="number"></td></tr>
-                            <tr><td>Fill</td><td><input type="checkbox"></td></tr>
-                            <tr><td>Expand</td><td><input type="checkbox"></td></tr>
-                            <tr><td>Pack Type</td><td><select><option>start</option><option>end</option></select></td></tr>
-                        </table>
-                    </div>
-                    <div data-layout="title:'Common'">
-                    </div>
-                    <div data-layout="title:'Signals'">
-                    </div>
-                </div>
-                <div><button>Reset defaults</button></div>
-            </div>
-        </div>
-        <div id="statusbar" data-layout="ex:1" style="background-color:#ccF">I'm the statusbar</div>
-    </div>
-</div>
+							</div>
+							<div data-layout="title:'Miscellaneous'">Miscellaneous</div>
+						</div>
+						<div data-layout="ex:1,sz:'boxV'">
+							<div data-layout="p:1,ex:1,sz:'tab'">
+								<div data-layout="title:'Unsaved 1'">
+									<div>Look on the left , there is an accordion
+										<div class="exclude" style="background:red" data-layout="sz:'absolute',x:10,y:20,w:100,h:100">ABSOLUTE</div>
+									</div>
+								</div>
+								<div data-layout="title:'Unsaved 2'">
+									<form>
+										<label>Age <input type="number" name="age"></label>
+										<label>Name <input type="text" name="name"></label>
+										<label>Address <input type="text" name="address"></label>
+										<label>Notes <textarea name="notes"></textarea></label>
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div data-layout="ex:1,sz:'boxV'" id="box-properties">
+						<input type="text"  data-layout="ex:1" placeholder="&lt;Search Widgets&gt;">
+						<select multiple="multiple" data-layout="ex:1"></select>
+						<div>Widget input1 options</div>
+						<div data-layout="p:1,ex:1,sz:'tab'">
+							<div data-layout="title:'General'">
+								<table>
+									<tr><td>Name</td><td><input type="text"></td></tr>
+									<tr><td>Editable</td><td><input type="checkbox"></td></tr>
+									<tr><td>Maximun length</td><td><input type="number"></td></tr>
+									<tr><td>Visibility</td><td><input type="checkbox"></td></tr>
+									<tr><td>Has Frame</td><td><input type="checkbox"></td></tr>
+									<tr><td>Invisible Character</td><td><input type="text"></td></tr>
+								</table>
+							</div>
+							<div data-layout="title:'Packing'">
+								<table>
+									<tr><td>Position</td><td><input type="number"></td></tr>
+									<tr><td>Padding</td><td><input type="number"></td></tr>
+									<tr><td>Fill</td><td><input type="checkbox"></td></tr>
+									<tr><td>Expand</td><td><input type="checkbox"></td></tr>
+									<tr><td>Pack Type</td><td><select><option>start</option><option>end</option></select></td></tr>
+								</table>
+							</div>
+							<div data-layout="title:'Common'">
+							</div>
+							<div data-layout="title:'Signals'">
+							</div>
+						</div>
+						<div><button>Reset defaults</button></div>
+					</div>
+				</div>
+				<div id="statusbar" data-layout="ex:1" style="background-color:#ccF">I'm the statusbar</div>
+			</div>
+		</div>
 
-</body>
+	</body>
 
 </html>
