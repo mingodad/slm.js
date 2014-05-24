@@ -628,6 +628,7 @@ JsLayoutManager = function() {
 				for (i = 0; i < csize; i++)
 				{
 					cc = elmToManageChildren[i];
+					addClass(cc, "accheaderbody");
 					ct = getLayout(cc);
 					ct.title = (ct.title === undefined) ? "acc " + i : ct.title;
 					s = document.createElement('div');
