@@ -483,8 +483,8 @@ JsLayoutManager = new function() {
 	{
 		var objLayout = self.getLayout(splitVH);
 		var splitter = splitVH.children[0];
-		var child0 = splitVH.children[1];
-		var child1 = splitVH.children[2];
+		//var child0 = splitVH.children[1];
+		//var child1 = splitVH.children[2];
 
 		if(openTrue && objLayout.savedSash)
 		{
@@ -504,11 +504,11 @@ JsLayoutManager = new function() {
 	var splitVH = function(elmToManage, objLayout, elmToManageChildren)
 	{
 		var i, len, spl, drag, handle_mousedown, handle_mouseup, handle_mousemove;
-		var offsetSize, splOffsetSize, clientSize, isVertical = (objLayout.sz === "splitV");
+		var offsetSize, splOffsetSize, isVertical = (objLayout.sz === "splitV");
+		var	clientSize = isVertical ? elmToManage.clientHeight : elmToManage.clientWidth;
 		//creazione splitter
 		if (!objLayout.ok)
 		{
-			clientSize = isVertical ? elmToManage.clientHeight : elmToManage.clientWidth;
 			offsetSize = isVertical ? elmToManage.offsetHeight : elmToManage.offsetWidth;
 			i = self.getPercentage(objLayout.sash);
 			if (i !== null)
@@ -535,13 +535,15 @@ JsLayoutManager = new function() {
 			drag = -1;
 
 			handle_mousemove = function(e) {
-				if (drag >= 0) {
-					var offset = (isVertical ? e.pageY : e.pageX) - drag;
+				if (drag) {
+					var offset = (isVertical ? e.pageY : e.pageX);
+					offset = (objLayout.inverse ? -offset : offset) - drag;
 					if (offset > 0 && offset < (offsetSize - splOffsetSize))
 					{
 						var bm = self.getBorderMirror(spl);
 						if (bm)
 						{
+							offset = objLayout.inverse ? clientSize - offset : offset;
 							var lobj = {};
 							lobj[isVertical ? "top" : "left"] = self.addStr_px(offset);
 							self.setCss(bm, lobj);
@@ -552,8 +554,9 @@ JsLayoutManager = new function() {
 			};
 
 			handle_mouseup = function(e) {
-				if (drag >= 0) {
-					var offset = (isVertical ? e.pageY : e.pageX) - drag;
+				if (drag) {
+					var offset = (isVertical ? e.pageY : e.pageX);
+					offset = (objLayout.inverse ? -offset : offset) - drag;
 					if (offset > 0 && offset < (offsetSize - splOffsetSize))
 					{
 						objLayout.sash = offset;
@@ -561,7 +564,7 @@ JsLayoutManager = new function() {
 						self.manageLayout(elmToManage);
 					}
 				}
-				drag = -1;
+				drag = 0;
 				self.removeBorderMirror(spl);
 				self.cancelEvent(e);
 				self.removeEventMulti(window, "mouseup touchend", handle_mouseup);
@@ -569,7 +572,8 @@ JsLayoutManager = new function() {
 			};
 
 			handle_mousedown = function(e) {
-				drag = (isVertical ? e.pageY : e.pageX) - objLayout.sash;
+				drag = (isVertical ? e.pageY : e.pageX);
+				drag = (objLayout.inverse ? -drag : drag) - objLayout.sash;
 				var rs = self.createBorderMirror(spl);
 				self.cancelEvent(e);
 				self.addEventMulti(window, "mouseup touchend", handle_mouseup);
@@ -582,22 +586,31 @@ JsLayoutManager = new function() {
 			self.setLayout(elmToManage, objLayout);
 		}
 		//adattamento children
+		var mysash = objLayout.inverse ? clientSize - objLayout.sash : objLayout.sash;
+		var sashPx = self.addStr_px(mysash);
+		var sash5Px = self.addStr_px(mysash + 5);
+		var lobj = {"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0};
+
 		if(isVertical)
 		{
-			self.setCss(elmToManageChildren[0], {"position": "absolute", "left": 0,
-				"top": 0, "right": 0, "height": self.addStr_px(objLayout.sash)});
-			self.setCss(elmToManageChildren[1], {"position": "absolute", "left": 0,
-				"top": self.addStr_px(objLayout.sash + 5), "right": 0, "bottom": 0});
-			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
-				{"top": self.addStr_px(objLayout.sash)});
+			lobj.right = 0;
+			lobj.height = sashPx;
+			self.setCss(elmToManageChildren[0], lobj);
+			delete lobj.height;
+			lobj.top = sash5Px;
+			self.setCss(elmToManageChildren[1], lobj);
 		} else {
-			self.setCss(elmToManageChildren[0], {"position": "absolute", "top": 0,
-				"bottom": 0, "left": 0, "width": self.addStr_px(objLayout.sash)});
-			self.setCss(elmToManageChildren[1], {"position": "absolute", "top": 0,
-				"left": self.addStr_px(objLayout.sash + 5), "bottom": 0, "right": 0});
-			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
-				{"left": self.addStr_px(objLayout.sash)});
+			lobj.bottom = 0;
+			lobj.width = sashPx;
+			self.setCss(elmToManageChildren[0], lobj);
+			delete lobj.width;
+			lobj.left = sash5Px;
+			self.setCss(elmToManageChildren[1], lobj);
 		}
+
+		lobj = {};
+		lobj[isVertical ? "top" : "left"] = sashPx;
+		self.setCss(self.getChildrenByClass(elmToManage, "splitter"), lobj);
 		return false;
 	};
 
