@@ -492,10 +492,16 @@ JsLayoutManager = new function() {
 			objLayout.savedSash = null;
 		} else {
 			objLayout.savedSash = objLayout.sash;
-			objLayout.sash = (child01 === 0) ? 0				
-				: (objLayout.sz === "splitH" ? 
+			var vdiff = (objLayout.sz === "splitH" ? 
 					(splitVH.clientWidth - splitter.offsetWidth) 
-					: (splitVH.clientHeight - splitter.offsetHeight));				
+					: (splitVH.clientHeight - splitter.offsetHeight));
+			if(objLayout.inverse)
+			{
+				objLayout.sash = (child01 === 0) ? vdiff : 0;
+			} else 
+			{
+				objLayout.sash = (child01 === 0) ? 0 : vdiff;
+			}
 		}			
 		self.setLayout(splitVH, objLayout);
 		self.manageLayout(splitVH);
