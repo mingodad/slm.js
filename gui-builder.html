@@ -29,6 +29,7 @@
 			.show-insertion-ha {
 				box-shadow: 4px 0 0 blue  !important;
 			}
+			#tree-browser {overflow:auto;}
 		</style>
 		<script type="text/javascript">
 			function applyLayoutToBody()
@@ -142,6 +143,10 @@
 				if (elmType)
 				{
 					drag_mouse_clone = document.createElement(elmType);
+					if(elmType === "button")
+					{
+						drag_mouse_clone.innerHTML = "Button";
+					}
 				} else {
 					drag_mouse_clone = target.cloneNode(true);
 				}
@@ -154,6 +159,52 @@
 				JsLayoutManager.cancelEvent(e, true);
 				JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
 				JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
+			}
+			
+			function getClassNameOrText(elm) {
+				switch (elm.nodeName) {
+					case "#comment":
+					case "#text":
+						var nodeValue = elm.nodeValue;
+						var isSpace = JsLayoutManager.isSpace;
+						for (var i = 0, len = nodeValue.length; i < len; ++i) {
+							if (!isSpace(nodeValue[i])) {
+								return nodeValue;
+							}
+						}
+
+						return "";
+						break;
+					default:
+						return elm.className;
+				}
+			}
+			
+			var treeViewDOMData;
+			
+			function showTreeDOM(element, data) {
+				var nameOrText = getClassNameOrText(element);
+				if (element.nodeName === "#text" && nameOrText === "")
+					return "";
+				var result = "<ul><li><a href='#' class='a_dt' data-did='" + data.length + "' id='did" + data.length + "'>" + element.nodeName + " : " + nameOrText + "</a>";
+				data.push(element);
+				var cn = element.childNodes;
+				for (var i = 0, cnl = cn.length; i < cnl; i++) {
+					var elm = cn[i];
+					result += showTreeDOM(elm, data);
+				}
+				result += "</li></ul>";
+				//result += "<pre>" + getStyle(element, "") + "</pre>";
+				return result;
+			}
+			
+			function projectChanged(tabId)
+			{
+				var elm = document.getElementById('tabs-projects');
+				var treeBrowser = document.getElementById('tree-browser');
+				//console.log(tabId, elm.children[tabId+1]);
+				treeViewDOMData = [];
+				treeBrowser.innerHTML = showTreeDOM(elm.children[tabId+1], treeViewDOMData);
 			}
 			
 			var currentWidgetId = false;
@@ -193,6 +244,7 @@
 					}
 				}
 			}
+			
 		</script>
 	</head>
 
@@ -360,7 +412,7 @@
 							<div data-layout="title:'Miscellaneous'">Miscellaneous</div>
 						</div>
 						<div data-layout="ex:1,sz:'boxV'">
-							<div data-layout="p:1,ex:1,sz:'tab'">
+							<div data-layout="p:1,ex:1,sz:'tab'" onchange="projectChanged(event)" id="tabs-projects">
 								<div data-layout="title:'Unsaved 1'" onclick="showPropertiesFor(event);">
 									<div id="x09s">Look on the left , there is an accordion
 										<div class="exclude" style="background:red" data-layout="sz:'absolute',x:10,y:20,w:100,h:100">ABSOLUTE</div>
@@ -385,35 +437,39 @@
 					</div>
 					<div data-layout="ex:1,sz:'boxV'" id="box-properties">
 						<input type="text"  data-layout="ex:1" placeholder="&lt;Search Widgets&gt;">
-						<select multiple="multiple" data-layout="ex:1"></select>
-						<div id="widget-propery-type-name">Widget input1 options</div>
-						<div data-layout="p:1,ex:1,sz:'tab'">
-							<div data-layout="title:'General'">
-								<table>
-									<tr><td>ID</td><td><input type="text" id="widget-propery-id" onchange="currWidgetSetId(this.value)"></td></tr>
-									<tr><td>Name</td><td><input type="text"></td></tr>
-									<tr><td>Editable</td><td><input type="checkbox"></td></tr>
-									<tr><td>Maximun length</td><td><input type="number"></td></tr>
-									<tr><td>Visibility</td><td><input type="checkbox"></td></tr>
-									<tr><td>Has Frame</td><td><input type="checkbox"></td></tr>
-									<tr><td>Invisible Character</td><td><input type="text"></td></tr>
-								</table>
-							</div>
-							<div data-layout="title:'Packing'">
-								<table>
-									<tr><td>Position</td><td><input type="number"></td></tr>
-									<tr><td>Padding</td><td><input type="number"></td></tr>
-									<tr><td>Fill</td><td><input type="checkbox"></td></tr>
-									<tr><td>Expand</td><td><input type="checkbox"></td></tr>
-									<tr><td>Pack Type</td><td><select><option>start</option><option>end</option></select></td></tr>
-								</table>
-							</div>
-							<div data-layout="title:'Common'">
-							</div>
-							<div data-layout="title:'Signals'">
+						<div data-layout="ex:1,p:1,sash:'30%',sz:'splitV'">
+							<div id="tree-browser"></div>
+							<div data-layout="ex:1,sz:'boxV'">
+								<div id="widget-propery-type-name">Widget input1 options</div>
+								<div data-layout="p:1,ex:1,sz:'tab'">
+									<div data-layout="title:'General'">
+										<table>
+											<tr><td>ID</td><td><input type="text" id="widget-propery-id" onchange="currWidgetSetId(this.value)"></td></tr>
+											<tr><td>Name</td><td><input type="text"></td></tr>
+											<tr><td>Editable</td><td><input type="checkbox"></td></tr>
+											<tr><td>Maximun length</td><td><input type="number"></td></tr>
+											<tr><td>Visibility</td><td><input type="checkbox"></td></tr>
+											<tr><td>Has Frame</td><td><input type="checkbox"></td></tr>
+											<tr><td>Invisible Character</td><td><input type="text"></td></tr>
+										</table>
+									</div>
+									<div data-layout="title:'Packing'">
+										<table>
+											<tr><td>Position</td><td><input type="number"></td></tr>
+											<tr><td>Padding</td><td><input type="number"></td></tr>
+											<tr><td>Fill</td><td><input type="checkbox"></td></tr>
+											<tr><td>Expand</td><td><input type="checkbox"></td></tr>
+											<tr><td>Pack Type</td><td><select><option>start</option><option>end</option></select></td></tr>
+										</table>
+									</div>
+									<div data-layout="title:'Common'">
+									</div>
+									<div data-layout="title:'Signals'">
+									</div>
+								</div>
+								<div><button>Reset defaults</button></div>								
 							</div>
 						</div>
-						<div><button>Reset defaults</button></div>
 					</div>
 				</div>
 				<div id="statusbar" data-layout="ex:1" style="background-color:#ccF">I'm the statusbar</div>

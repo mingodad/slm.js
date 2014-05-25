@@ -828,6 +828,10 @@ JsLayoutManager = new function() {
 							self.setLayout(elmToManage, objLayout);
 							self.addClass(this, "selected");
 							self.manageLayout(elmToManage);
+							if(elmToManage.onchange)
+							{
+								elmToManage.onchange(objLayout.sel);
+							}
 						};
 					})(i));
 				}
