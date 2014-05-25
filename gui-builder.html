@@ -47,12 +47,14 @@
 
 			function dockPaletteShowHide(bval)
 			{
-				JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-palette"));
+				//JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-palette"));
+				JsLayoutManager.spliterOpenClose(document.getElementById("box-palette").parentNode, 0, bval);
 			}
 
 			function dockPropertiesShowHide(bval)
 			{
-				JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-properties"));
+				//JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-properties"));
+				JsLayoutManager.spliterOpenClose(document.getElementById("box-properties").parentNode, 1, bval);
 			}
 
 			function showHideInsertionPoint(evt, show, elm) {
@@ -198,7 +200,7 @@
 
 		<div id="root" data-layout="sz:'fullpage'">
 			<div id="main-menu" data-layout="sz:'boxV'">
-				<ul data-layout="ex:1,sz:'menu',bar:1" id="menu">
+				<ul data-layout="sz:'menu',bar:1" id="menu">
 					<li>File
 						<ul data-layout="sz:'menu'">
 							<li>New</li>

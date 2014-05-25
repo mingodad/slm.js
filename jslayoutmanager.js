@@ -478,6 +478,28 @@ JsLayoutManager = new function() {
 		};
 		self.addEvent(target, "mousedown", fmousedown);
 	};
+	
+	self.spliterOpenClose = function(splitVH, child01, openTrue)
+	{
+		var objLayout = self.getLayout(splitVH);
+		var splitter = splitVH.children[0];
+		var child0 = splitVH.children[1];
+		var child1 = splitVH.children[2];
+
+		if(openTrue && objLayout.savedSash)
+		{
+			objLayout.sash = objLayout.savedSash;
+			objLayout.savedSash = null;
+		} else {
+			objLayout.savedSash = objLayout.sash;
+			objLayout.sash = (child01 === 0) ? 0				
+				: (objLayout.sz === "splitH" ? 
+					(splitVH.clientWidth - splitter.offsetWidth) 
+					: (splitVH.clientHeight - splitter.offsetHeight));				
+		}			
+		self.setLayout(splitVH, objLayout);
+		self.manageLayout(splitVH);
+	};
 
 	self.layoutFunctions = {
 		absolute: function(elmToManage, objLayout, c)
