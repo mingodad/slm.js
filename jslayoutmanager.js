@@ -501,6 +501,106 @@ JsLayoutManager = new function() {
 		self.manageLayout(splitVH);
 	};
 
+	var splitVH = function(elmToManage, objLayout, elmToManageChildren)
+	{
+		var i, len, spl, drag, handle_mousedown, handle_mouseup, handle_mousemove;
+		var offsetSize, splOffsetSize, clientSize, isVertical = (objLayout.sz === "splitV");
+		//creazione splitter
+		if (!objLayout.ok)
+		{
+			clientSize = isVertical ? elmToManage.clientHeight : elmToManage.clientWidth;
+			offsetSize = isVertical ? elmToManage.offsetHeight : elmToManage.offsetWidth;
+			i = self.getPercentage(objLayout.sash);
+			if (i !== null)
+			{
+				objLayout.sash = (clientSize / 100.0) * i;
+			} else {
+				objLayout.sash = self.getNumber(objLayout.sash, clientSize / 2);
+			}
+			self.setLayout(elmToManage, objLayout);
+			self.setCss(elmToManage, {overflow: 'hidden'});
+			spl = document.createElement('div');
+			self.addClass(spl, "slmignore splitter");
+			
+			if(isVertical)
+			{
+				self.setCss(spl, {"position": "absolute", "left": 0, "right": 0,
+					"height": "5px", "overflow": "hidden", "cursor": "row-resize"});
+			} else {
+				self.setCss(spl, {"position": "absolute", "top": 0,
+					"bottom": 0, "width": "5px", "overflow": "hidden", "cursor": "col-resize"});
+			}
+			elmToManage.insertBefore(spl, elmToManage.firstChild);
+			splOffsetSize = isVertical ? spl.offsetHeight : spl.offsetWidth;
+			drag = -1;
+
+			handle_mousemove = function(e) {
+				if (drag >= 0) {
+					var offset = (isVertical ? e.pageY : e.pageX) - drag;
+					if (offset > 0 && offset < (offsetSize - splOffsetSize))
+					{
+						var bm = self.getBorderMirror(spl);
+						if (bm)
+						{
+							var lobj = {};
+							lobj[isVertical ? "top" : "left"] = self.addStr_px(offset);
+							self.setCss(bm, lobj);
+						}
+					}
+				}
+				self.cancelEvent(e);
+			};
+
+			handle_mouseup = function(e) {
+				if (drag >= 0) {
+					var offset = (isVertical ? e.pageY : e.pageX) - drag;
+					if (offset > 0 && offset < (offsetSize - splOffsetSize))
+					{
+						objLayout.sash = offset;
+						self.setLayout(elmToManage, objLayout);
+						self.manageLayout(elmToManage);
+					}
+				}
+				drag = -1;
+				self.removeBorderMirror(spl);
+				self.cancelEvent(e);
+				self.removeEventMulti(window, "mouseup touchend", handle_mouseup);
+				self.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
+			};
+
+			handle_mousedown = function(e) {
+				drag = (isVertical ? e.pageY : e.pageX) - objLayout.sash;
+				var rs = self.createBorderMirror(spl);
+				self.cancelEvent(e);
+				self.addEventMulti(window, "mouseup touchend", handle_mouseup);
+				self.addEventMulti(window, "mousemove touchmove", handle_mousemove);
+			};
+			self.addEventMulti(spl, "mousedown touchstart", handle_mousedown);
+
+
+			objLayout.ok = true;
+			self.setLayout(elmToManage, objLayout);
+		}
+		//adattamento children
+		if(isVertical)
+		{
+			self.setCss(elmToManageChildren[0], {"position": "absolute", "left": 0,
+				"top": 0, "right": 0, "height": self.addStr_px(objLayout.sash)});
+			self.setCss(elmToManageChildren[1], {"position": "absolute", "left": 0,
+				"top": self.addStr_px(objLayout.sash + 5), "right": 0, "bottom": 0});
+			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
+				{"top": self.addStr_px(objLayout.sash)});
+		} else {
+			self.setCss(elmToManageChildren[0], {"position": "absolute", "top": 0,
+				"bottom": 0, "left": 0, "width": self.addStr_px(objLayout.sash)});
+			self.setCss(elmToManageChildren[1], {"position": "absolute", "top": 0,
+				"left": self.addStr_px(objLayout.sash + 5), "bottom": 0, "right": 0});
+			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
+				{"left": self.addStr_px(objLayout.sash)});
+		}
+		return false;
+	};
+
 	self.layoutFunctions = {
 		absolute: function(elmToManage, objLayout, c)
 		{
@@ -818,154 +918,11 @@ JsLayoutManager = new function() {
 		},
 		splitV: function(elmToManage, objLayout, elmToManageChildren)
 		{
-			var i, len, spl, drag, handle_mousedown, handle_mouseup, handle_mousemove;
-			//creazione splitter
-			if (!objLayout.ok)
-			{
-				i = self.getPercentage(objLayout.sash);
-				if (i !== null)
-				{
-					objLayout.sash = (elmToManage.clientHeight / 100.0) * i;
-				} else {
-					objLayout.sash = self.getNumber(objLayout.sash, elmToManage.clientHeight / 2);
-				}
-				self.setLayout(elmToManage, objLayout);
-				self.setCss(elmToManage, {overflow: 'hidden'});
-				spl = document.createElement('div');
-				self.addClass(spl, "slmignore splitter");
-				self.setCss(spl, {"position": "absolute", "left": 0, "right": 0,
-					"height": "5px", "overflow": "hidden", "cursor": "row-resize"});
-				elmToManage.insertBefore(spl, elmToManage.firstChild);
-				drag = -1;
-
-				handle_mousemove = function(e) {
-					if (drag >= 0) {
-						var offset = e.pageY - drag;
-						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
-						{
-							var bm = self.getBorderMirror(spl);
-							if (bm)
-							{
-								self.setCss(bm, {"top": self.addStr_px(offset)});
-							}
-						}
-					}
-					self.cancelEvent(e);
-				};
-
-				handle_mouseup = function(e) {
-					if (drag >= 0) {
-						var offset = e.pageY - drag;
-						if (offset > 0 && offset < (elmToManage.offsetHeight - spl.offsetHeight))
-						{
-							objLayout.sash = offset;
-							self.setLayout(elmToManage, objLayout);
-							self.manageLayout(elmToManage);
-						}
-					}
-					drag = -1;
-					self.removeBorderMirror(spl);
-					self.cancelEvent(e);
-					self.removeEventMulti(window, "mouseup touchend", handle_mouseup);
-					self.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
-				};
-
-				handle_mousedown = function(e) {
-					drag = e.pageY - objLayout.sash;
-					var rs = self.createBorderMirror(spl);
-					self.cancelEvent(e);
-					self.addEventMulti(window, "mouseup touchend", handle_mouseup);
-					self.addEventMulti(window, "mousemove touchmove", handle_mousemove);
-				};
-				self.addEventMulti(spl, "mousedown touchstart", handle_mousedown);
-
-
-				objLayout.ok = true;
-				self.setLayout(elmToManage, objLayout);
-			}
-			//adattamento children	
-			self.setCss(elmToManageChildren[0], {"position": "absolute", "left": 0,
-				"top": 0, "right": 0, "height": self.addStr_px(objLayout.sash)});
-			self.setCss(elmToManageChildren[1], {"position": "absolute", "left": 0,
-				"top": self.addStr_px(objLayout.sash + 5), "right": 0, "bottom": 0});
-			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
-				{"top": self.addStr_px(objLayout.sash)});
-			return false;
+			splitVH(elmToManage, objLayout, elmToManageChildren);
 		},
 		splitH: function(elmToManage, objLayout, elmToManageChildren)
 		{
-			var i, len, spl, drag, handle_mousedown, handle_mouseup, handle_mousemove;
-			//creazione splitter
-			if (!objLayout.ok)
-			{
-				self.setCss(elmToManage, {overflow: 'hidden'});
-				i = self.getPercentage(objLayout.sash);
-				if (i !== null)
-				{
-					objLayout.sash = (elmToManage.clientWidth / 100.0) * i;
-				} else {
-					objLayout.sash = self.getNumber(objLayout.sash, elmToManage.clientWidth / 2);
-				}
-				self.setLayout(elmToManage, objLayout);
-				spl = document.createElement('div');
-				self.addClass(spl, "slmignore splitter");
-				self.setCss(spl, {"position": "absolute", "top": 0,
-					"bottom": 0, "width": "5px", "overflow": "hidden", "cursor": "col-resize"});
-				elmToManage.insertBefore(spl, elmToManage.firstChild);
-				drag = -1;
-
-				handle_mousemove = function(e) {
-					if (drag >= 0) {
-						var offset = e.pageX - drag;
-						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
-						{
-							var bm = self.getBorderMirror(spl);
-							if (bm)
-							{
-								self.setCss(bm, {"left": self.addStr_px(offset)});
-							}
-						}
-					}
-					self.cancelEvent(e);
-				};
-
-				handle_mouseup = function(e) {
-					if (drag >= 0) {
-						var offset = e.pageX - drag;
-						if (offset > 0 && offset < (elmToManage.offsetWidth - spl.offsetWidth))
-						{
-							objLayout.sash = offset;
-							self.setLayout(elmToManage, objLayout);
-							self.manageLayout(elmToManage);
-						}
-					}
-					drag = -1;
-					self.removeBorderMirror(spl);
-					self.cancelEvent(e);
-					self.removeEventMulti(window, "mouseup touchend", handle_mouseup);
-					self.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
-				};
-
-				handle_mousedown = function(e) {
-					t = self.getLayout(elmToManage);
-					drag = e.pageX - objLayout.sash;
-					var rs = self.createBorderMirror(spl);
-					self.cancelEvent(e);
-					self.addEventMulti(window, "mouseup touchend", handle_mouseup);
-					self.addEventMulti(window, "mousemove touchmove", handle_mousemove);
-				};
-				self.addEventMulti(spl, "mousedown touchstart", handle_mousedown);
-
-				objLayout.ok = true;
-				self.setLayout(elmToManage, objLayout);
-			}
-			self.setCss(elmToManageChildren[0], {"position": "absolute", "top": 0,
-				"bottom": 0, "left": 0, "width": self.addStr_px(objLayout.sash)});
-			self.setCss(elmToManageChildren[1], {"position": "absolute", "top": 0,
-				"left": self.addStr_px(objLayout.sash + 5), "bottom": 0, "right": 0});
-			self.setCss(self.getChildrenByClass(elmToManage, "splitter"),
-				{"left": self.addStr_px(objLayout.sash)});
-			return false;
+			splitVH(elmToManage, objLayout, elmToManageChildren);
 		},
 		snap: function(elmToManage, objLayout, elmToManageChildren)
 		{
