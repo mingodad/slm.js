@@ -315,6 +315,7 @@ JsLayoutManager = new function() {
 			setDisplay(elm);
 		}
 	};
+
 	self.elmShow = function(elm)
 	{
 		style = elm.style;
@@ -324,6 +325,14 @@ JsLayoutManager = new function() {
 			style.hideSavedDisplay = null;
 		} else {
 			elm.style.display = '';
+		}
+	};
+
+	self.hideChilds = function(elm) {
+		var i, len, tc = elm.children;
+		for (i = 0, len = tc.length; i < len; ++i)
+		{
+			self.elmHide(tc[i]);
 		}
 	};
 
@@ -479,6 +488,70 @@ JsLayoutManager = new function() {
 		self.addEvent(target, "mousedown", fmousedown);
 	};
 	
+	var tabsDoAction = function(action, options)
+	{
+		var tabsElm = options.tabs;
+		if(!tabsElm && options.tabChild)
+		{
+			tabsElm = options.tabChild.parentNode;
+		}
+		var objLayout = self.getLayout(tabsElm);
+		var doLayout = function()
+		{
+			objLayout.ok = false;
+			self.setLayout(tabsElm, objLayout);
+			self.manageLayout(tabsElm);
+		};
+		if(objLayout.sz === "tabs")
+		{
+			switch(action)
+			{
+				case "new-tab":
+					var newTab = document.createElement('div');
+					self.addClass(newTab, "tabbody");
+					self.setLayout(newTab, {"title": options.title});
+					tabsElm.appendChild(newTab);
+					doLayout();
+					return newTab;
+					break;
+				case "remove-tab":
+					tabsElm.removeChild(options.tabChild);
+					doLayout();
+					break;
+				case "get-tab-title":
+					objLayout = self.getLayout(options.tabChild);
+					return objLayout.title;
+					break;
+				case "set-tab-title":
+					objLayout = self.getLayout(options.tabChild);
+					objLayout.title = options.title;
+					self.setLayout(options.tabChild, {"title": options.title});
+					doLayout();
+					break;
+			}
+		}
+	};
+
+	self.tabsAddTab = function(tabsElm, newTabTitle)
+	{
+		return tabsDoAction("new-tab", {tabs: tabsElm, title: newTabTitle});
+	};
+
+	self.tabsRemoveTab = function(theTabElm)
+	{
+		tabsDoAction("remove-tab", {tabChild: theTabElm});
+	};
+
+	self.tabsGetTabTitle = function(theTabElm)
+	{
+		tabsDoAction("get-tab-title", {tabChild: theTabElm});
+	};
+
+	self.tabsSetTabTitle = function(theTabElm, newTabTitle)
+	{
+		tabsDoAction("get-tab-title", {tabChild: theTabElm, title: newTabTitle});
+	};
+
 	self.spliterOpenClose = function(splitVH, child01, openTrue)
 	{
 		var objLayout = self.getLayout(splitVH);
@@ -618,14 +691,6 @@ JsLayoutManager = new function() {
 		lobj[isVertical ? "top" : "left"] = sashPx;
 		self.setCss(self.getChildrenByClass(elmToManage, "splitter"), lobj);
 		return false;
-	};
-
-	self.hideChilds = function(elm) {
-		var i, len, tc = elm.children;
-		for (i = 0, len = tc.length; i < len; ++i)
-		{
-			self.elmHide(tc[i]);
-		}
 	};
 
 	self.layoutFunctions = {
@@ -802,7 +867,7 @@ JsLayoutManager = new function() {
 					"width": self.addStr_px(tcc.w), "height": self.addStr_px(tcc.h)});
 			}
 		},
-		tab: function(elmToManage, objLayout, elmToManageChildren)
+		tabs: function(elmToManage, objLayout, elmToManageChildren)
 		{
 			var isVisible, i, csize, cc, pt, s;
 			var header;
@@ -850,10 +915,14 @@ JsLayoutManager = new function() {
 			objLayout.sel = isNaN(objLayout.sel) ? 0 : objLayout.sel % csize;
 			var hs = self.getChildrenByClass(elmToManage, "tabheader");
 			hs = self.addStr_px(hs.length ? self.getFullElmSize(hs[0]).heigth : 0);
-			self.elmHide(elmToManageChildren);
-			var ctsel = elmToManageChildren[objLayout.sel];
-			self.setCss(ctsel, {"position": "absolute", "left": 0, "top": hs, "right": 0, "bottom": 0});
-			self.elmShow(ctsel);
+			//maybe we do not have children
+			if(elmToManageChildren.length)
+			{
+				self.elmHide(elmToManageChildren);
+				var ctsel = elmToManageChildren[objLayout.sel];
+				self.setCss(ctsel, {"position": "absolute", "left": 0, "top": hs, "right": 0, "bottom": 0});
+				self.elmShow(ctsel);
+			}
 
 			return false;
 		},

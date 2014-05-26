@@ -1,0 +1,32 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : 26-May-2014, 17:12:37
+    Author     : mingo
+*/
+
+#box-palette li:hover {background-color:blue; color:white;}
+.outline-target {
+	/*outline: #33F 1px solid !important;*/
+	outline: 1px solid !important;
+}
+.show-insertion-vb {
+	box-shadow: 0 -4px 0 blue  !important;
+}
+
+.show-insertion-va {
+	box-shadow: 0 4px 0 blue  !important;
+}
+
+.show-insertion-hb {
+	box-shadow: -4px 0 0 blue  !important;
+}
+
+.show-insertion-ha {
+	box-shadow: 4px 0 0 blue  !important;
+}
+#tree-browser {overflow:auto;}
+

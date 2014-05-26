@@ -7,371 +7,9 @@
 		<title>GUI Builder</title>
 		<meta name="description" content="Dialogs template to be used in javascript app.">
 		<link rel="stylesheet" href="jslayoutmanager.css">
+		<link rel="stylesheet" href="gui-builder.css">
 		<script type="text/javascript" src="jslayoutmanager.js"></script>
-		<style type="text/css">
-			#box-palette li:hover {background-color:blue; color:white;}
-			.outline-target {
-				/*outline: #33F 1px solid !important;*/
-				outline: 1px solid !important;
-			}
-			.show-insertion-vb {
-				box-shadow: 0 -4px 0 blue  !important;
-			}
-
-			.show-insertion-va {
-				box-shadow: 0 4px 0 blue  !important;
-			}
-
-			.show-insertion-hb {
-				box-shadow: -4px 0 0 blue  !important;
-			}
-
-			.show-insertion-ha {
-				box-shadow: 4px 0 0 blue  !important;
-			}
-			#tree-browser {overflow:auto;}
-		</style>
-		<script type="text/javascript">
-			//globals
-			var drag_mouse_point = false;
-			var drag_mouse_clone = false;
-			var drag_mouse_target = false;
-			var treeViewDOMData;
-			var currentWidgetId = false;
-			var currentProjectTabId = false;
-
-
-			function applyLayoutToBody()
-			{
-				var i, len, layout, children = document.body.children;
-				for (i = 0, len = children.length; i < len; ++i)
-				{
-					layout = children[i].getAttribute('data-layout');
-					if (layout)
-					{
-						JsLayoutManager.manageLayout(children[i]);
-					}
-				}
-				projectChanged(0);
-			}
-			window.onload = applyLayoutToBody;
-
-			function dockPaletteShowHide(bval)
-			{
-				//JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-palette"));
-				JsLayoutManager.spliterOpenClose(document.getElementById("box-palette").parentNode, 0, bval);
-			}
-
-			function dockPropertiesShowHide(bval)
-			{
-				//JsLayoutManager[bval ? "elmShow" : "elmHide"](document.getElementById("box-properties"));
-				JsLayoutManager.spliterOpenClose(document.getElementById("box-properties").parentNode, 1, bval);
-			}
-
-			function showHideInsertionPoint(evt, show, elm) {
-				if(!elm)
-				{
-					elm = JsLayoutManager.getEventSource(evt);					
-				}
-				if (elm) {
-					var currClass = elm.className.replace(/\s*\bshow-insertion-[hv][ab]\b/g, '');
-					if (show) {
-						var isBlock = getComputedStyle(elm, null).display === "block";
-						var mousePos = JsLayoutManager.getMousePos(evt);
-						//console.log(mousePos.x + " : " + elm.offsetLeft + " :: " + mousePos.y + " : " + elm.offsetTop);
-						currClass += " show-insertion-" + (isBlock ? "v" : "h") + "a";
-					}
-					if (elm.className !== currClass)
-						elm.className = currClass;
-				}
-			}
-
-			function setCssByIds(idsSpaceSeparatedStr, cssProperty, cssValue)
-			{
-				var ids = idsSpaceSeparatedStr.split(" ");
-				for(var i=0, len=ids.length; i<len; ++i)
-				{
-					var elm = document.getElementById(ids[i]);
-					if(elm)
-					{
-						elm.style[cssProperty] = cssValue;
-					}
-				}
-			}
-
-			function childOf(c,p){while((c=c.parentNode)&&c!==p);return !!c;}
-
-			function isValidToDrop(target)
-			{
-				var allowedToDrop = document.getElementById(currentProjectTabId);
-				return (target === allowedToDrop) || childOf(target, allowedToDrop);
-			}
-
-			function handle_mousemove(e) {
-				if (drag_mouse_point) {
-					var target = JsLayoutManager.getEventSource(e);
-					//console.log(target);
-					if (target !== drag_mouse_target) {
-						if (drag_mouse_target)
-						{
-							showHideInsertionPoint(e, false, drag_mouse_target);
-						}
-						if(isValidToDrop(target))
-						{
-							drag_mouse_target = target;
-							showHideInsertionPoint(e, true, drag_mouse_target);
-							drag_mouse_clone.style.opacity = 1;
-						} else {
-							drag_mouse_target = false;
-							drag_mouse_clone.style.opacity = 0.5;
-						}
-					}
-					if (drag_mouse_clone)
-					{
-						drag_mouse_point = JsLayoutManager.getMousePos(e);
-						drag_mouse_point.x++;
-						drag_mouse_point.y++;
-						JsLayoutManager.setCss(drag_mouse_clone, {
-							top: JsLayoutManager.addStr_px(drag_mouse_point.y),
-							left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
-					}
-				}
-				JsLayoutManager.cancelEvent(e);
-			}
-
-			function handle_mouseup(e) {
-				if (drag_mouse_point) {
-					var target = JsLayoutManager.getEventSource(e);
-					//console.log(target);
-					if (drag_mouse_clone)
-					{
-						if(isValidToDrop(target))
-						{
-							drag_mouse_clone.removeAttribute("style");
-							target.appendChild(drag_mouse_clone.parentNode.removeChild(drag_mouse_clone));
-						} else {
-							drag_mouse_clone.parentNode.removeChild(drag_mouse_clone);
-						}
-					}
-				}
-				if (drag_mouse_target)
-				{
-					showHideInsertionPoint(e, false, drag_mouse_target);
-				}
-				drag_mouse_point = false;
-				drag_mouse_target = false;
-				drag_mouse_clone = false;
-				JsLayoutManager.cancelEvent(e);
-				JsLayoutManager.removeEventMulti(window, "mouseup touchend", handle_mouseup);
-				JsLayoutManager.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
-				//setCssByIds('box-palette box-properties', "opacity", "");
-			}
-
-			function startDragPalette(e)
-			{
-				var target = JsLayoutManager.getEventSource(e);
-				//console.log(target);
-				drag_mouse_point = JsLayoutManager.getMousePos(e);
-				drag_mouse_point.x++;
-				drag_mouse_point.y++;
-				var elmType = target.getAttribute("data-type");
-				if (elmType)
-				{
-					drag_mouse_clone = document.createElement(elmType);
-					if(elmType === "button")
-					{
-						drag_mouse_clone.innerHTML = "Button";
-					}
-				} else {
-					drag_mouse_clone = target.cloneNode(true);
-				}
-				document.body.appendChild(drag_mouse_clone);
-				JsLayoutManager.setCss(drag_mouse_clone, {
-					outline: "dotted 1px",
-					position: "absolute",
-					top: JsLayoutManager.addStr_px(drag_mouse_point.y),
-					left: JsLayoutManager.addStr_px(drag_mouse_point.x)});
-				JsLayoutManager.cancelEvent(e, true);
-				JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
-				JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
-			}
-			
-			function getClassNameOrText(elm) {
-				switch (elm.nodeName) {
-					case "#comment":
-					case "#text":
-						var nodeValue = elm.nodeValue;
-						var isSpace = JsLayoutManager.isSpace;
-						for (var i = 0, len = nodeValue.length; i < len; ++i) {
-							if (!isSpace(nodeValue[i])) {
-								return nodeValue;
-							}
-						}
-
-						return "";
-						break;
-					default:
-						return elm.className;
-				}
-			}
-
-			function showTreeDOM(element, data) {
-				var nameOrText = getClassNameOrText(element);
-				if (element.nodeName === "#text" && nameOrText === "")
-					return "";
-				var result = "<ul><li><a href='#' class='a_dt' data-did='" + data.length + "' id='did" + data.length + "'>" + element.nodeName + " : " + nameOrText + "</a>";
-				data.push(element);
-				var cn = element.childNodes;
-				for (var i = 0, cnl = cn.length; i < cnl; i++) {
-					var elm = cn[i];
-					result += showTreeDOM(elm, data);
-				}
-				result += "</li></ul>";
-				//result += "<pre>" + getStyle(element, "") + "</pre>";
-				return result;
-			}
-			
-			function projectChanged(tabId)
-			{
-				var elm = document.getElementById('tabs-projects');
-				var treeBrowser = document.getElementById('tree-browser');
-				//console.log(tabId, elm.children[tabId+1]);
-				treeViewDOMData = [];
-				var projectTab = elm.children[tabId+1];
-				treeBrowser.innerHTML = showTreeDOM(projectTab, treeViewDOMData);
-				currentProjectTabId = JsLayoutManager.getAutoId(projectTab);
-			}
-			
-			function showPropertiesFor(event)
-			{
-				var target = JsLayoutManager.getEventSource(event);
-				if(target && !this.contentEditable)
-				{
-					var elm = document.getElementById('widget-propery-type-name');
-					if(elm)
-					{
-						currentWidgetId = JsLayoutManager.getAutoId(target);
-						elm.innerHTML = "Widget " + target.nodeName + " > " + currentWidgetId;
-						elm = document.getElementById('widget-propery-id');
-						if(elm)
-						{
-							elm.value = currentWidgetId;
-						}
-						var signals = document.getElementById('widget-properties-signals');
-						if(signals)
-						{
-							var prop, events_keys = [], ev_edit = ["<table>"];
-							for(prop in target)
-							{
-								if(prop.indexOf("on") === 0)
-								{
-									events_keys.push(prop);
-								}
-							}
-							events_keys.sort();
-							for(var i=0, len=events_keys.length; i<len; ++i)
-							{
-								prop = events_keys[i];
-								ev_edit.push("<tr><td>" + prop + "</td><td><input type='text' value='" + (target[prop] || "") + "'></td></tr>");
-							}
-							ev_edit.push("</table>");
-							signals.innerHTML = ev_edit.join("");
-						}
-					}
-				} else {
-					currentWidgetId = false;
-				}
-			}
-
-			function currWidgetSetId(theId)
-			{
-				if(currentWidgetId)
-				{
-					if(document.getElementById(theId))
-					{
-						alert("This id is already in use : " + theId);
-						return;
-					}
-					var elm = document.getElementById(currentWidgetId);
-					if(elm)
-					{
-						elm.id = currentWidgetId = theId;
-					}
-				}
-			}
-			
-			function switchToSourceOrCodeView(bToSource)
-			{
-				if(currentProjectTabId)
-				{
-					var elm = document.getElementById(currentProjectTabId);
-					if(elm)
-					{
-						var textProperty = "innerText";
-						if( ! (textProperty in elm))
-						{
-							textProperty = "textContent";
-						}
-						if(bToSource)
-						{
-							if(elm.contentEditable !== "true")
-							{
-								elm[textProperty] = elm.innerHTML;
-								elm.contentEditable = true;								
-							}
-						} else {
-							if(elm.contentEditable === "true")
-							{
-								elm.innerHTML = elm[textProperty];
-								elm.contentEditable = false;
-							}
-						}
-					}
-				}
-			}
-
-			function doSaveLoadHtmlContent(doSave, elmId)
-			{
-				var elm = document.getElementById(elmId);
-				if(elm)
-				{
-					if(Storage)
-					{
-						if(doSave)
-						{
-							localStorage.setItem(elmId, elm.innerHTML);						
-						} else {
-							var txt = localStorage.getItem(elmId);
-							if(txt)
-							{
-								elm.innerHTML = txt;
-							}
-						}
-					}
-				}
-			}
-
-			function manageMenuClick(event)
-			{
-				var target = JsLayoutManager.getEventSource(event);
-				//console.log(target);
-				var action = target.getAttribute("data-action");
-				if(action)
-				{
-					switch(action)
-					{
-						case "save":
-							doSaveLoadHtmlContent(true, currentProjectTabId);
-							break;
-						case "open":
-							doSaveLoadHtmlContent(false, currentProjectTabId);
-							break;
-					}
-				}
-				//JsLayoutManager.menuClose(menu);
-			}
-
-		</script>
+		<script type="text/javascript" src="gui-builder.js"></script>
 	</head>
 
 	<body>
@@ -381,18 +19,18 @@
 				<ul data-layout="sz:'menu',bar:1,ex:1" id="menu" onclick="manageMenuClick(event)">
 					<li>File
 						<ul data-layout="sz:'menu'">
-							<li>New</li>
-							<li data-action="open">Open</li>
+							<li data-action="project-new">New</li>
+							<li data-action="project-open">Open</li>
 							<li>Open recent<ul data-layout="sz:'menu'">
 									<li>First</li>
 									<li>Second</li>
 									<li>Third</li>
 								</ul>
 							</li>
-							<li data-action="save">Save</li>
-							<li>Save As</li>
+							<li data-action="project-save">Save</li>
+							<li data-action="project-saveas">Save As</li>
 							<li>Properties</li>
-							<li>Close</li>
+							<li data-action="project-close">Close</li>
 							<li>Quit</li>
 						</ul>
 					</li>
@@ -540,7 +178,7 @@
 							<div data-layout="title:'Miscellaneous'">Miscellaneous</div>
 						</div>
 						<div data-layout="ex:1,sz:'boxV'">
-							<div data-layout="p:1,ex:1,sz:'tab'" onchange="projectChanged(event)" id="tabs-projects">
+							<div data-layout="p:1,ex:1,sz:'tabs'" onchange="projectChanged(event)" id="tabs-projects">
 								<div data-layout="title:'Unsaved 1'" onclick="showPropertiesFor(event);">
 									<div id="x09s">Look on the left , there is an accordion
 										<div class="exclude" style="background:red" data-layout="sz:'absolute',x:10,y:20,w:100,h:100">ABSOLUTE</div>
@@ -569,7 +207,7 @@
 							<div id="tree-browser"></div>
 							<div data-layout="ex:1,sz:'boxV'">
 								<div id="widget-propery-type-name">Widget input1 options</div>
-								<div data-layout="p:1,ex:1,sz:'tab'">
+								<div data-layout="p:1,ex:1,sz:'tabs'">
 									<div data-layout="title:'General'">
 										<table>
 											<tr><td>ID</td><td><input type="text" id="widget-propery-id" onchange="currWidgetSetId(this.value)"></td></tr>
