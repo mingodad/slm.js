@@ -323,11 +323,52 @@
 							if(elm.contentEditable === "true")
 							{
 								elm.innerHTML = elm[textProperty];
-								elm.contentEditable = false;								
+								elm.contentEditable = false;
 							}
 						}
 					}
 				}
+			}
+
+			function doSaveLoadHtmlContent(doSave, elmId)
+			{
+				var elm = document.getElementById(elmId);
+				if(elm)
+				{
+					if(Storage)
+					{
+						if(doSave)
+						{
+							localStorage.setItem(elmId, elm.innerHTML);						
+						} else {
+							var txt = localStorage.getItem(elmId);
+							if(txt)
+							{
+								elm.innerHTML = txt;
+							}
+						}
+					}
+				}
+			}
+
+			function manageMenuClick(event)
+			{
+				var target = JsLayoutManager.getEventSource(event);
+				//console.log(target);
+				var action = target.getAttribute("data-action");
+				if(action)
+				{
+					switch(action)
+					{
+						case "save":
+							doSaveLoadHtmlContent(true, currentProjectTabId);
+							break;
+						case "open":
+							doSaveLoadHtmlContent(false, currentProjectTabId);
+							break;
+					}
+				}
+				//JsLayoutManager.menuClose(menu);
 			}
 
 		</script>
@@ -337,18 +378,18 @@
 
 		<div id="root" data-layout="sz:'fullpage'">
 			<div id="main-menu" data-layout="sz:'boxV'">
-				<ul data-layout="sz:'menu',bar:1,ex:1" id="menu">
+				<ul data-layout="sz:'menu',bar:1,ex:1" id="menu" onclick="manageMenuClick(event)">
 					<li>File
 						<ul data-layout="sz:'menu'">
 							<li>New</li>
-							<li>Open</li>
+							<li data-action="open">Open</li>
 							<li>Open recent<ul data-layout="sz:'menu'">
 									<li>First</li>
 									<li>Second</li>
 									<li>Third</li>
 								</ul>
 							</li>
-							<li>Save</li>
+							<li data-action="save">Save</li>
 							<li>Save As</li>
 							<li>Properties</li>
 							<li>Close</li>

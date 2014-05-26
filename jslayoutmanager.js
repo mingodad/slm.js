@@ -620,6 +620,14 @@ JsLayoutManager = new function() {
 		return false;
 	};
 
+	self.hideChilds = function(elm) {
+		var i, len, tc = elm.children;
+		for (i = 0, len = tc.length; i < len; ++i)
+		{
+			self.elmHide(tc[i]);
+		}
+	};
+
 	self.layoutFunctions = {
 		absolute: function(elmToManage, objLayout, c)
 		{
@@ -1008,13 +1016,7 @@ JsLayoutManager = new function() {
 						}
 					};
 				})(objLayout.bar);
-				fhide = function() {
-					var i, len, tc = this.children;
-					for (i = 0, len = tc.length; i < len; ++i)
-					{
-						self.elmHide(tc[i]);
-					}
-				};
+				fhide = function() {self.hideChilds(this);};
 				self.addClass(elmToManage, "menu");
 				if (objLayout.bar)
 					self.addClass(elmToManage, "menubar");
