@@ -307,17 +307,22 @@
 					var elm = document.getElementById(currentProjectTabId);
 					if(elm)
 					{
+						var textProperty = "innerText";
+						if( ! (textProperty in elm))
+						{
+							textProperty = "textContent";
+						}
 						if(bToSource)
 						{
 							if(elm.contentEditable !== "true")
 							{
-								elm.innerText = elm.innerHTML;
+								elm[textProperty] = elm.innerHTML;
 								elm.contentEditable = true;								
 							}
 						} else {
 							if(elm.contentEditable === "true")
 							{
-								elm.innerHTML = elm.innerText;
+								elm.innerHTML = elm[textProperty];
 								elm.contentEditable = false;								
 							}
 						}
