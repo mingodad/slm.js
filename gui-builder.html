@@ -99,6 +99,14 @@
 				}
 			}
 
+			function childOf(c,p){while((c=c.parentNode)&&c!==p);return !!c;}
+
+			function isValidToDrop(target)
+			{
+				var allowedToDrop = document.getElementById(currentProjectTabId);
+				return (target === allowedToDrop) || childOf(target, allowedToDrop);
+			}
+
 			function handle_mousemove(e) {
 				if (drag_mouse_point) {
 					var target = JsLayoutManager.getEventSource(e);
@@ -108,8 +116,15 @@
 						{
 							showHideInsertionPoint(e, false, drag_mouse_target);
 						}
-						drag_mouse_target = target;
-						showHideInsertionPoint(e, true, drag_mouse_target);
+						if(isValidToDrop(target))
+						{
+							drag_mouse_target = target;
+							showHideInsertionPoint(e, true, drag_mouse_target);
+							drag_mouse_clone.style.opacity = 1;
+						} else {
+							drag_mouse_target = false;
+							drag_mouse_clone.style.opacity = 0.5;
+						}
 					}
 					if (drag_mouse_clone)
 					{
@@ -130,12 +145,13 @@
 					//console.log(target);
 					if (drag_mouse_clone)
 					{
-						JsLayoutManager.setCss(drag_mouse_clone, {
-							outline: "",
-							top: JsLayoutManager.addStr_px(e.offsetY),
-							left: JsLayoutManager.addStr_px(e.offsetX)
-						});
-						target.appendChild(document.body.removeChild(drag_mouse_clone));
+						if(isValidToDrop(target))
+						{
+							drag_mouse_clone.removeAttribute("style");
+							target.appendChild(drag_mouse_clone.parentNode.removeChild(drag_mouse_clone));
+						} else {
+							drag_mouse_clone.parentNode.removeChild(drag_mouse_clone);
+						}
 					}
 				}
 				if (drag_mouse_target)
@@ -148,7 +164,7 @@
 				JsLayoutManager.cancelEvent(e);
 				JsLayoutManager.removeEventMulti(window, "mouseup touchend", handle_mouseup);
 				JsLayoutManager.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
-				setCssByIds('box-palette box-properties', "opacity", "");
+				//setCssByIds('box-palette box-properties', "opacity", "");
 			}
 
 			function startDragPalette(e)
@@ -178,7 +194,6 @@
 				JsLayoutManager.cancelEvent(e, true);
 				JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
 				JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
-				setCssByIds('box-palette box-properties', "opacity", 0.5);
 			}
 			
 			function getClassNameOrText(elm) {
