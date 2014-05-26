@@ -257,6 +257,26 @@
 						{
 							elm.value = currentWidgetId;
 						}
+						var signals = document.getElementById('widget-properties-signals');
+						if(signals)
+						{
+							var prop, events_keys = [], ev_edit = ["<table>"];
+							for(prop in target)
+							{
+								if(prop.indexOf("on") === 0)
+								{
+									events_keys.push(prop);
+								}
+							}
+							events_keys.sort();
+							for(var i=0, len=events_keys.length; i<len; ++i)
+							{
+								prop = events_keys[i];
+								ev_edit.push("<tr><td>" + prop + "</td><td><input type='text' value='" + (target[prop] || "") + "'></td></tr>");
+							}
+							ev_edit.push("</table>");
+							signals.innerHTML = ev_edit.join("");
+						}
 					}
 				} else {
 					currentWidgetId = false;
@@ -526,7 +546,7 @@
 									</div>
 									<div data-layout="title:'Common'">
 									</div>
-									<div data-layout="title:'Signals'">
+									<div data-layout="title:'Signals'" id="widget-properties-signals">
 									</div>
 								</div>
 								<div><button>Reset defaults</button></div>								
