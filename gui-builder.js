@@ -1,7 +1,10 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/*
+ Gui builder: Application to test JsLayoutManager 
+ (https://github.com/mingodad/slm.js)
+ Copyright (c) 2014, Domingo Alvarez Duarte - mingodad[at]gmail[dot]com
+ 
+ Released under the GNU LESSER GENERAL PUBLIC LICENSE  Version 3
+ 
  */
 
 //globals
