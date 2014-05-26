@@ -544,12 +544,12 @@ JsLayoutManager = new function() {
 
 	self.tabsGetTabTitle = function(theTabElm)
 	{
-		tabsDoAction("get-tab-title", {tabChild: theTabElm});
+		return tabsDoAction("get-tab-title", {tabChild: theTabElm});
 	};
 
 	self.tabsSetTabTitle = function(theTabElm, newTabTitle)
 	{
-		tabsDoAction("get-tab-title", {tabChild: theTabElm, title: newTabTitle});
+		tabsDoAction("set-tab-title", {tabChild: theTabElm, title: newTabTitle});
 	};
 
 	self.spliterOpenClose = function(splitVH, child01, openTrue)
