@@ -32,6 +32,15 @@
 			#tree-browser {overflow:auto;}
 		</style>
 		<script type="text/javascript">
+			//globals
+			var drag_mouse_point = false;
+			var drag_mouse_clone = false;
+			var drag_mouse_target = false;
+			var treeViewDOMData;
+			var currentWidgetId = false;
+			var currentProjectTabId = false;
+
+
 			function applyLayoutToBody()
 			{
 				var i, len, layout, children = document.body.children;
@@ -43,6 +52,7 @@
 						JsLayoutManager.manageLayout(children[i]);
 					}
 				}
+				projectChanged(0);
 			}
 			window.onload = applyLayoutToBody;
 
@@ -76,9 +86,19 @@
 				}
 			}
 
-			var drag_mouse_point = false;
-			var drag_mouse_clone = false;
-			var drag_mouse_target = false;
+			function setCssByIds(idsSpaceSeparatedStr, cssProperty, cssValue)
+			{
+				var ids = idsSpaceSeparatedStr.split(" ");
+				for(var i=0, len=ids.length; i<len; ++i)
+				{
+					var elm = document.getElementById(ids[i]);
+					if(elm)
+					{
+						elm.style[cssProperty] = cssValue;
+					}
+				}
+			}
+
 			function handle_mousemove(e) {
 				if (drag_mouse_point) {
 					var target = JsLayoutManager.getEventSource(e);
@@ -103,7 +123,6 @@
 				}
 				JsLayoutManager.cancelEvent(e);
 			}
-			;
 
 			function handle_mouseup(e) {
 				if (drag_mouse_point) {
@@ -129,8 +148,8 @@
 				JsLayoutManager.cancelEvent(e);
 				JsLayoutManager.removeEventMulti(window, "mouseup touchend", handle_mouseup);
 				JsLayoutManager.removeEventMulti(window, "mousemove touchmove", handle_mousemove);
+				setCssByIds('box-palette box-properties', "opacity", "");
 			}
-			;
 
 			function startDragPalette(e)
 			{
@@ -159,6 +178,7 @@
 				JsLayoutManager.cancelEvent(e, true);
 				JsLayoutManager.addEventMulti(window, "mouseup touchend", handle_mouseup);
 				JsLayoutManager.addEventMulti(window, "mousemove touchmove", handle_mousemove);
+				setCssByIds('box-palette box-properties', "opacity", 0.5);
 			}
 			
 			function getClassNameOrText(elm) {
@@ -179,9 +199,7 @@
 						return elm.className;
 				}
 			}
-			
-			var treeViewDOMData;
-			
+
 			function showTreeDOM(element, data) {
 				var nameOrText = getClassNameOrText(element);
 				if (element.nodeName === "#text" && nameOrText === "")
@@ -204,14 +222,15 @@
 				var treeBrowser = document.getElementById('tree-browser');
 				//console.log(tabId, elm.children[tabId+1]);
 				treeViewDOMData = [];
-				treeBrowser.innerHTML = showTreeDOM(elm.children[tabId+1], treeViewDOMData);
+				var projectTab = elm.children[tabId+1];
+				treeBrowser.innerHTML = showTreeDOM(projectTab, treeViewDOMData);
+				currentProjectTabId = JsLayoutManager.getAutoId(projectTab);
 			}
 			
-			var currentWidgetId = false;
 			function showPropertiesFor(event)
 			{
 				var target = JsLayoutManager.getEventSource(event);
-				if(target)
+				if(target && !this.contentEditable)
 				{
 					var elm = document.getElementById('widget-propery-type-name');
 					if(elm)
@@ -228,6 +247,7 @@
 					currentWidgetId = false;
 				}
 			}
+
 			function currWidgetSetId(theId)
 			{
 				if(currentWidgetId)
@@ -245,6 +265,31 @@
 				}
 			}
 			
+			function switchToSourceOrCodeView(bToSource)
+			{
+				if(currentProjectTabId)
+				{
+					var elm = document.getElementById(currentProjectTabId);
+					if(elm)
+					{
+						if(bToSource)
+						{
+							if(elm.contentEditable !== "true")
+							{
+								elm.innerText = elm.innerHTML;
+								elm.contentEditable = true;								
+							}
+						} else {
+							if(elm.contentEditable === "true")
+							{
+								elm.innerHTML = elm.innerText;
+								elm.contentEditable = false;								
+							}
+						}
+					}
+				}
+			}
+
 		</script>
 	</head>
 
@@ -312,7 +357,9 @@
 						</ul>
 					</li>
 				</ul>
-				<div id="toolbar" data-layout="ex:1" style="background-color:#cFc">I'm the toolbar</div>
+				<div id="toolbar" data-layout="ex:1" style="background-color:#cFc">
+					<button onclick="switchToSourceOrCodeView(true)">Source</button><button onclick="switchToSourceOrCodeView(false)">Design</button>
+				</div>
 				<div data-layout="ex:1,p:1,sash:'20%',sz:'splitH',inverse:1">
 					<div data-layout="ex:1,sash:'20%',sz:'splitH'">
 						<div data-layout="ex:1,p:1,sz:'accordion'" id="box-palette">
